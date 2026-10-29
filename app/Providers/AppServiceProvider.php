@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use Anthropic\Beta\Messages\BetaOutputConfig\Effort;
+use Anthropic\Client;
+use App\Services\Llm\AnthropicStructuredLlm;
+use App\Services\Llm\StructuredLlm;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(StructuredLlm::class, fn (): StructuredLlm => new AnthropicStructuredLlm(
+            client: new Client(apiKey: config('services.anthropic.key')),
+            model: config('services.anthropic.model'),
+            effort: Effort::from(config('services.anthropic.effort')),
+        ));
     }
 
     /**
