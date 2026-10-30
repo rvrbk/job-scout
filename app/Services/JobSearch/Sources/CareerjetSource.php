@@ -22,7 +22,7 @@ class CareerjetSource implements JobSource
 
     public function fetch(JobSearchPreference $preferences): array
     {
-        $location = collect($preferences->locations)->first(fn (string $item) => mb_strtolower($item) !== 'remote');
+        $location = collect($preferences->placeNames())->first(fn (string $item) => mb_strtolower($item) !== 'remote');
         $jobs = [];
 
         foreach (array_slice($preferences->keywords ?: ['developer'], 0, self::MAX_KEYWORDS) as $keyword) {

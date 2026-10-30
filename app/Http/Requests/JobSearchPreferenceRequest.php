@@ -10,11 +10,23 @@ use Illuminate\Validation\Rule;
 class JobSearchPreferenceRequest extends FormRequest
 {
     /**
-     * List fields arrive from the form as comma or line separated text.
+     * Locations arrive as rows of place and setting; the other list fields as comma or line separated text.
      */
     protected function prepareForValidation(): void
     {
-        foreach (['locations', 'keywords', 'exclusions', 'feeds', 'boards'] as $field) {
+        if (is_array($this->input('locations'))) {
+            $this->merge([
+                'locations' => collect($this->input('locations'))
+                    ->filter(fn (mixed $row) => is_array($row))
+                    ->map(fn (array $row) => ['place' => trim((string) ($row['place'] ?? '')), 'mode' => $row['mode'] ?? null])
+                    ->filter(fn (array $row) => $row['place'] !== '')
+                    ->unique(fn (array $row) => mb_strtolower($row['place']))
+                    ->values()
+                    ->all(),
+            ]);
+        }
+
+        foreach (['keywords', 'exclusions', 'feeds', 'boards'] as $field) {
             if (is_string($this->input($field))) {
                 $this->merge([
                     $field => collect(preg_split('/[,\n]/', $this->input($field)))
@@ -37,7 +49,8 @@ class JobSearchPreferenceRequest extends FormRequest
     {
         return [
             'locations' => ['nullable', 'array', 'max:10'],
-            'locations.*' => ['string', 'max:100'],
+            'locations.*.place' => ['required', 'string', 'max:100'],
+            'locations.*.mode' => ['required', Rule::in([JobSearchPreference::REMOTE_ANY, JobSearchPreference::REMOTE_HYBRID, JobSearchPreference::REMOTE_ONLY])],
             'remote_preference' => ['required', Rule::in([JobSearchPreference::REMOTE_ANY, JobSearchPreference::REMOTE_HYBRID, JobSearchPreference::REMOTE_ONLY])],
             'keywords' => ['nullable', 'array', 'max:20'],
             'keywords.*' => ['string', 'max:100'],

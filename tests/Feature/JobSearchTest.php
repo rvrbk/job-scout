@@ -155,11 +155,55 @@ class JobSearchTest extends TestCase
         ]);
         $this->fakeLlm();
         $user = $this->userWithLedger();
-        $user->jobSearchPreference()->create(['remote_preference' => 'hybrid', 'locations' => ['Netherlands']]);
+        $user->jobSearchPreference()->create(['remote_preference' => 'remote_only', 'locations' => [['place' => 'Netherlands', 'mode' => 'hybrid']]]);
 
         app(JobSearcher::class)->search($user->refresh());
 
         $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Hybrid in a Dutch city', 'Remote in Germany'], $user->jobPostings()->pluck('title')->all());
+    }
+
+    public function test_every_listed_place_has_its_own_setting()
+    {
+        $job = fn (string $slug, string $location, bool $remote, string $description) => [
+            'slug' => $slug, 'title' => "Job {$slug}", 'company_name' => 'A', 'location' => $location, 'remote' => $remote,
+            'url' => "https://example.com/{$slug}", 'description' => $description, 'created_at' => now()->timestamp,
+        ];
+        Http::fake([
+            'arbeitnow.com/*' => Http::response(['data' => [
+                $job('nl-hybrid', 'Utrecht', false, 'Hybrid, 2 days at the office'),
+                $job('nl-onsite', 'Utrecht', false, 'Five days on site'),
+                $job('be-onsite', 'Antwerp, Belgium', false, 'Five days on site'),
+                $job('de-hybrid', 'Berlin, Germany', false, 'Hybrid, 2 days at the office'),
+                $job('de-remote', 'Berlin, Germany', true, 'Work from anywhere'),
+            ]]),
+            'remotive.com/*' => Http::response(['jobs' => []]),
+            'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
+        ]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create([
+            'remote_preference' => 'remote_only',
+            'locations' => [['place' => 'Netherlands', 'mode' => 'hybrid'], ['place' => 'Belgium', 'mode' => 'any']],
+        ]);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertEqualsCanonicalizing(['Job nl-hybrid', 'Job be-onsite', 'Job de-remote'], $user->jobPostings()->pluck('title')->all());
+    }
+
+    public function test_preferences_saved_with_plain_place_names_keep_their_old_meaning()
+    {
+        $user = User::factory()->create();
+        $preferences = $user->jobSearchPreference()->create(['locations' => ['Netherlands'], 'remote_preference' => 'hybrid']);
+
+        $this->assertSame([['place' => 'Netherlands', 'mode' => 'hybrid']], $preferences->places());
+        $this->assertSame('remote_only', $preferences->elsewhere());
+        $this->assertSame(['Netherlands'], $preferences->placeNames());
+
+        $this->actingAs($user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('preferences.locations', [['place' => 'Netherlands', 'mode' => 'hybrid']])
+            ->where('preferences.remote_preference', 'remote_only'));
     }
 
     public function test_a_failing_source_does_not_stop_the_search()
@@ -257,7 +301,12 @@ class JobSearchTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->put(route('jobs.preferences.update'), [
-            'locations' => "Heerenveen\nNetherlands",
+            'locations' => [
+                ['place' => 'Netherlands', 'mode' => 'hybrid'],
+                ['place' => ' Heerenveen ', 'mode' => 'any'],
+                ['place' => '', 'mode' => 'any'],
+                ['place' => 'netherlands', 'mode' => 'any'],
+            ],
             'remote_preference' => 'remote_only',
             'keywords' => 'laravel, vue, Laravel',
             'exclusions' => '',
@@ -268,7 +317,8 @@ class JobSearchTest extends TestCase
 
         $preferences = $user->jobSearchPreference;
 
-        $this->assertSame(['Heerenveen', 'Netherlands'], $preferences->locations);
+        $this->assertSame([['place' => 'Netherlands', 'mode' => 'hybrid'], ['place' => 'Heerenveen', 'mode' => 'any']], $preferences->locations);
+        $this->assertSame('remote_only', $preferences->elsewhere());
         $this->assertSame(['laravel', 'vue'], $preferences->keywords);
         $this->assertSame([], $preferences->exclusions);
         $this->assertSame(['https://example.com/jobs.rss'], $preferences->feeds);

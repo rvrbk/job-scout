@@ -37,13 +37,16 @@ export type JobPostingSummary = {
     match_score: number | null;
     match_reason: string | null;
     documents_count: number;
-    documents: Pick<DocumentSummary, 'type' | 'type_label' | 'status'>[];
+    documents: Pick<DocumentSummary, "type" | "type_label" | "status">[];
     created_at: string | null;
 };
 
+export type WorkMode = "any" | "hybrid" | "remote_only";
+
 export type JobSearchPreferences = {
-    locations: string[];
-    remote_preference: 'any' | 'hybrid' | 'remote_only';
+    locations: { place: string; mode: WorkMode }[];
+    /** The setting for everywhere that is not a listed place. */
+    remote_preference: WorkMode;
     keywords: string[];
     exclusions: string[];
     feeds: string[];
@@ -63,12 +66,12 @@ export type JobPosting = {
 };
 
 export type DocumentStatus =
-    | 'generating'
-    | 'verifying'
-    | 'needs_review'
-    | 'verified'
-    | 'approved'
-    | 'failed';
+    | "generating"
+    | "verifying"
+    | "needs_review"
+    | "verified"
+    | "approved"
+    | "failed";
 
 export type DocumentSummary = {
     id: number;
@@ -80,11 +83,11 @@ export type DocumentSummary = {
 
 export type DocumentClaim = {
     id: number;
-    section: 'summary' | 'experience' | 'skills' | 'letter';
+    section: "summary" | "experience" | "skills" | "letter";
     group: number;
-    kind: 'claim' | 'framing' | 'skill';
+    kind: "claim" | "framing" | "skill";
     text: string;
-    status: 'pending' | 'supported' | 'unsupported';
+    status: "pending" | "supported" | "unsupported";
     verifier_note: string | null;
     entry_heading: string | null;
     facts: { id: number; statement: string }[];
@@ -92,7 +95,7 @@ export type DocumentClaim = {
 
 export type GeneratedDocument = {
     id: number;
-    type: 'cv' | 'cover_letter';
+    type: "cv" | "cover_letter";
     type_label: string;
     status: DocumentStatus;
     is_processing: boolean;

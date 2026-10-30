@@ -188,22 +188,34 @@ class JobSearcher
             return true;
         }
 
-        if ($preferences->remote_preference === JobSearchPreference::REMOTE_ONLY) {
-            return false;
+        $mode = $this->modeFor($job, $preferences);
+
+        return str_contains($haystack, 'hybrid')
+            ? JobSearchPreference::acceptsHybrid($mode)
+            : JobSearchPreference::acceptsOnSite($mode);
+    }
+
+    /**
+     * What the user accepts for a job that is not remote, going by where it is: the most generous setting of the
+     * listed places it falls in, else the "everywhere else" setting. A job with no stated location could be in any
+     * of them, so it gets the most generous setting overall.
+     */
+    private function modeFor(FoundJob $job, JobSearchPreference $preferences): string
+    {
+        $rank = [JobSearchPreference::REMOTE_ONLY => 0, JobSearchPreference::REMOTE_HYBRID => 1, JobSearchPreference::REMOTE_ANY => 2];
+        $places = $preferences->places();
+
+        $modes = blank($job->location)
+            ? array_column($places, 'mode')
+            : collect($places)
+                ->filter(fn (array $place) => LocationMatcher::matches($job->location, [$place['place']]))
+                ->pluck('mode')
+                ->all();
+
+        if ($modes === [] || blank($job->location)) {
+            $modes[] = $preferences->elsewhere();
         }
 
-        // Hybrid roles say so in the posting, and only count where the user is willing to go to the office.
-        if ($preferences->remote_preference === JobSearchPreference::REMOTE_HYBRID && ! str_contains($haystack, 'hybrid')) {
-            return false;
-        }
-
-        $locations = $preferences->locations ?? [];
-
-        // A job with no stated location is never ruled out by location.
-        if ($locations === [] || blank($job->location)) {
-            return true;
-        }
-
-        return LocationMatcher::matches($job->location, $locations);
+        return collect($modes)->sortByDesc(fn (string $mode) => $rank[$mode] ?? 0)->first();
     }
 }

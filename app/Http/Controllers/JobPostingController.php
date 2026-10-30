@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Http\Requests\JobPostingRequest;
 use App\Models\GeneratedDocument;
 use App\Models\JobPosting;
+use App\Models\JobSearchPreference;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -49,8 +50,8 @@ class JobPostingController extends Controller
                 'created_at' => $posting->created_at?->toDateString(),
             ]),
             'preferences' => [
-                'locations' => $preferences?->locations ?? [],
-                'remote_preference' => $preferences?->remote_preference ?? 'any',
+                'locations' => $preferences?->places() ?? [],
+                'remote_preference' => $preferences?->elsewhere() ?? JobSearchPreference::REMOTE_ONLY,
                 'keywords' => $preferences?->keywords ?? [],
                 'exclusions' => $preferences?->exclusions ?? [],
                 'feeds' => $preferences?->feeds ?? [],

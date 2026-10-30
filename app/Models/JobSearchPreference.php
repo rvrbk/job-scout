@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
- * @property list<string>|null $locations
+ * @property list<string|array{place: string, mode: string}>|null $locations
  * @property string $remote_preference
  * @property list<string>|null $keywords
  * @property list<string>|null $exclusions
@@ -29,6 +29,54 @@ class JobSearchPreference extends Model
     public const string REMOTE_ONLY = 'remote_only';
 
     public const string REMOTE_HYBRID = 'hybrid';
+
+    /**
+     * The places the user listed, each with the kind of job they accept there. Rows saved before every place
+     * had its own setting hold plain names, which all share the old single setting.
+     *
+     * @return list<array{place: string, mode: string}>
+     */
+    public function places(): array
+    {
+        return collect($this->locations ?? [])
+            ->map(fn (string|array $entry) => is_string($entry)
+                ? ['place' => $entry, 'mode' => $this->remote_preference]
+                : ['place' => $entry['place'], 'mode' => $entry['mode']])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The kind of job accepted anywhere that is not a listed place. Rows with plain place names only ever
+     * wanted remote jobs elsewhere; for the rest `remote_preference` holds this setting.
+     */
+    public function elsewhere(): string
+    {
+        $legacy = collect($this->locations ?? [])->contains(fn (string|array $entry) => is_string($entry));
+
+        return $legacy ? self::REMOTE_ONLY : $this->remote_preference;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function placeNames(): array
+    {
+        return array_column($this->places(), 'place');
+    }
+
+    /**
+     * Whether jobs that are not remote are accepted under the given setting.
+     */
+    public static function acceptsOnSite(string $mode): bool
+    {
+        return $mode === self::REMOTE_ANY;
+    }
+
+    public static function acceptsHybrid(string $mode): bool
+    {
+        return $mode === self::REMOTE_ANY || $mode === self::REMOTE_HYBRID;
+    }
 
     /**
      * The expectation as prompt text, or null when none is set.

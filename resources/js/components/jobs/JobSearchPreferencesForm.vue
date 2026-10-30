@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form } from "@inertiajs/vue3";
+import { Plus, X } from "@lucide/vue";
+import { ref } from "vue";
 import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
 import InputError from "@/components/InputError.vue";
 import { Button } from "@/components/ui/button";
@@ -8,9 +10,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobSearchPreferences } from "@/types";
 
-defineProps<{
+const props = defineProps<{
     preferences: JobSearchPreferences;
 }>();
+
+const modes = [
+    { value: "any", label: "On-site, hybrid or remote" },
+    { value: "hybrid", label: "Hybrid or remote" },
+    { value: "remote_only", label: "Remote only" },
+];
+
+const selectClass =
+    "h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30";
+
+let nextKey = 0;
+const locations = ref(
+    props.preferences.locations.map((location) => ({
+        key: nextKey++,
+        ...location,
+    })),
+);
+
+const addLocation = () =>
+    locations.value.push({ key: nextKey++, place: "", mode: "hybrid" });
 
 const lines = (items: string[]) => items.join("\n");
 </script>
@@ -22,35 +44,81 @@ const lines = (items: string[]) => items.join("\n");
         v-slot="{ errors, processing }"
     >
         <div class="grid gap-4 sm:grid-cols-2">
-            <div class="grid gap-2">
-                <Label for="locations">Locations</Label>
-                <Textarea
-                    id="locations"
-                    name="locations"
-                    rows="3"
-                    placeholder="Heerenveen&#10;Netherlands"
-                    :default-value="lines(preferences.locations)"
-                />
-                <p class="text-xs text-muted-foreground">
-                    One place per line, e.g. Netherlands. Hybrid and on-site
-                    jobs outside these places are skipped; remote jobs are never
-                    filtered by location.
-                </p>
-                <InputError :message="errors.locations" />
-            </div>
-            <div class="grid gap-2">
-                <Label for="remote_preference">Remote</Label>
-                <select
-                    id="remote_preference"
-                    name="remote_preference"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
-                    :value="preferences.remote_preference"
+            <div class="grid gap-2 sm:col-span-2">
+                <Label>Locations</Label>
+                <div
+                    v-for="(row, index) in locations"
+                    :key="row.key"
+                    class="flex items-center gap-2"
                 >
-                    <option value="any">Remote or on-site</option>
-                    <option value="hybrid">Hybrid or remote</option>
-                    <option value="remote_only">Remote only</option>
-                </select>
-                <InputError :message="errors.remote_preference" />
+                    <Input
+                        :name="`locations[${index}][place]`"
+                        v-model="row.place"
+                        placeholder="Netherlands, Europe, Utrecht…"
+                        class="max-w-xs"
+                    />
+                    <select
+                        :name="`locations[${index}][mode]`"
+                        v-model="row.mode"
+                        :class="selectClass"
+                    >
+                        <option
+                            v-for="mode in modes"
+                            :key="mode.value"
+                            :value="mode.value"
+                        >
+                            {{ mode.label }}
+                        </option>
+                    </select>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        title="Remove location"
+                        @click="locations.splice(index, 1)"
+                    >
+                        <X class="size-4" />
+                    </Button>
+                </div>
+                <div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        :disabled="locations.length >= 10"
+                        @click="addLocation"
+                    >
+                        <Plus /> Add location
+                    </Button>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                    <Label for="remote_preference" class="w-28"
+                        >Everywhere else</Label
+                    >
+                    <select
+                        id="remote_preference"
+                        name="remote_preference"
+                        :class="selectClass"
+                        :value="preferences.remote_preference"
+                    >
+                        <option
+                            v-for="mode in modes"
+                            :key="mode.value"
+                            :value="mode.value"
+                        >
+                            {{ mode.label }}
+                        </option>
+                    </select>
+                </div>
+                <p class="text-xs text-muted-foreground">
+                    Each place can be a country, a region like Europe or EMEA,
+                    or a city, and has its own setting for the jobs you accept
+                    there. Places not listed use "Everywhere else". Remote jobs
+                    are accepted from anywhere.
+                </p>
+                <InputError
+                    :message="errors.locations || errors.remote_preference"
+                />
             </div>
             <div class="grid gap-2">
                 <Label for="keywords">Keywords</Label>
