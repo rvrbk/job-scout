@@ -28,7 +28,7 @@ use Throwable;
 class JobSearcher
 {
     /** Cap on model-scored postings per run, to keep cost predictable. */
-    public const int MAX_NEW_PER_RUN = 40;
+    public const int MAX_NEW_PER_RUN = 100;
 
     private const int MAX_AGE_DAYS = 30;
 
