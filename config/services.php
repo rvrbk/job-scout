@@ -34,10 +34,13 @@ return [
         'effort' => env('ANTHROPIC_EFFORT', 'high'),
     ],
 
-    'adzuna' => [
-        'app_id' => env('ADZUNA_APP_ID'),
-        'app_key' => env('ADZUNA_APP_KEY'),
-        'country' => env('ADZUNA_COUNTRY', 'nl'),
+    'jooble' => [
+        'key' => env('JOOBLE_API_KEY'),
+    ],
+
+    'careerjet' => [
+        'key' => env('CAREERJET_API_KEY'),
+        'locale' => env('CAREERJET_LOCALE', 'nl_NL'),
     ],
 
     'slack' => [

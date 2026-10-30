@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Form } from "@inertiajs/vue3";
-import { computed } from "vue";
 import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
 import InputError from "@/components/InputError.vue";
 import { Button } from "@/components/ui/button";
@@ -9,20 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobSearchPreferences } from "@/types";
 
-const props = defineProps<{
+defineProps<{
     preferences: JobSearchPreferences;
-    adzunaEnabled: boolean;
 }>();
 
 const lines = (items: string[]) => items.join("\n");
-
-const sourcesNote = computed(
-    () =>
-        "Always searched: Arbeitnow, Remotive and We Work Remotely" +
-        (props.adzunaEnabled
-            ? ", and Adzuna."
-            : ". Adzuna is off until ADZUNA_APP_ID and ADZUNA_APP_KEY are set."),
-);
 </script>
 
 <template>
@@ -102,9 +92,28 @@ const sourcesNote = computed(
                 :default-value="lines(preferences.feeds)"
             />
             <p class="text-xs text-muted-foreground">
-                {{ sourcesNote }}
+                Always searched: Arbeitnow, Remotive, Jobicy, Remote OK,
+                Himalayas, The Muse and We Work Remotely. Jooble and Careerjet
+                join in when their API keys are set on the server.
             </p>
             <InputError :message="errors.feeds" />
+        </div>
+
+        <div class="grid gap-2">
+            <Label for="boards">Company job boards</Label>
+            <Textarea
+                id="boards"
+                name="boards"
+                rows="2"
+                placeholder="greenhouse:stripe&#10;lever:palantir"
+                :default-value="lines(preferences.boards)"
+            />
+            <p class="text-xs text-muted-foreground">
+                One per line as provider:company, where provider is
+                greenhouse, lever, ashby or workable and company is the name
+                in the board's URL.
+            </p>
+            <InputError :message="errors.boards" />
         </div>
 
         <div class="flex flex-wrap items-end gap-6">

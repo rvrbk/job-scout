@@ -14,7 +14,7 @@ class JobSearchPreferenceRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        foreach (['locations', 'keywords', 'exclusions', 'feeds'] as $field) {
+        foreach (['locations', 'keywords', 'exclusions', 'feeds', 'boards'] as $field) {
             if (is_string($this->input($field))) {
                 $this->merge([
                     $field => collect(preg_split('/[,\n]/', $this->input($field)))
@@ -45,6 +45,8 @@ class JobSearchPreferenceRequest extends FormRequest
             'exclusions.*' => ['string', 'max:100'],
             'feeds' => ['nullable', 'array', 'max:10'],
             'feeds.*' => ['url:https', 'max:2048'],
+            'boards' => ['nullable', 'array', 'max:50'],
+            'boards.*' => ['string', 'regex:/^(greenhouse|lever|ashby|workable):[\w-]+$/i', 'max:100'],
             'min_score' => ['required', 'integer', 'between:0,100'],
             'salary_min' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'salary_max' => ['nullable', 'integer', 'min:0', 'max:10000000', 'gte:salary_min'],

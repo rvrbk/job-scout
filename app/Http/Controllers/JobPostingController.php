@@ -53,12 +53,12 @@ class JobPostingController extends Controller
                 'keywords' => $preferences?->keywords ?? [],
                 'exclusions' => $preferences?->exclusions ?? [],
                 'feeds' => $preferences?->feeds ?? [],
+                'boards' => $preferences?->boards ?? [],
                 'min_score' => $preferences?->min_score ?? 60,
                 'salary_min' => $preferences?->salary_min,
                 'salary_max' => $preferences?->salary_max,
                 'last_searched_at' => $preferences?->last_searched_at?->toDateTimeString(),
             ],
-            'adzunaEnabled' => filled(config('services.adzuna.app_id')) && filled(config('services.adzuna.app_key')),
         ]);
     }
 

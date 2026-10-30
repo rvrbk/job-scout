@@ -5,8 +5,14 @@ namespace App\Services\JobSearch;
 use App\Models\JobSearchPreference;
 use App\Models\User;
 use App\Services\Cv\LedgerSnapshot;
-use App\Services\JobSearch\Sources\AdzunaSource;
 use App\Services\JobSearch\Sources\ArbeitnowSource;
+use App\Services\JobSearch\Sources\CareerjetSource;
+use App\Services\JobSearch\Sources\CompanyBoardSource;
+use App\Services\JobSearch\Sources\HimalayasSource;
+use App\Services\JobSearch\Sources\JobicySource;
+use App\Services\JobSearch\Sources\JoobleSource;
+use App\Services\JobSearch\Sources\MuseSource;
+use App\Services\JobSearch\Sources\RemoteOkSource;
 use App\Services\JobSearch\Sources\RemotiveSource;
 use App\Services\JobSearch\Sources\RssSource;
 use Illuminate\Support\Facades\Log;
@@ -131,8 +137,19 @@ class JobSearcher
         $sources = [
             'arbeitnow' => new ArbeitnowSource,
             'remotive' => new RemotiveSource,
-            'adzuna' => new AdzunaSource,
+            'jobicy' => new JobicySource,
+            'remoteok' => new RemoteOkSource,
+            'himalayas' => new HimalayasSource,
+            'themuse' => new MuseSource,
+            'jooble' => new JoobleSource,
+            'careerjet' => new CareerjetSource,
         ];
+
+        foreach ($preferences->boards ?? [] as $spec) {
+            if ($board = CompanyBoardSource::fromSpec($spec)) {
+                $sources[$spec] = $board;
+            }
+        }
 
         foreach (array_unique([self::DEFAULT_FEED, ...($preferences->feeds ?? [])]) as $url) {
             $sources[$url] = new RssSource($url, 'rss:'.(parse_url($url, PHP_URL_HOST) ?: 'feed'));

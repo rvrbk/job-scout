@@ -15,12 +15,13 @@ use Illuminate\Support\Carbon;
  * @property list<string>|null $keywords
  * @property list<string>|null $exclusions
  * @property list<string>|null $feeds
+ * @property list<string>|null $boards
  * @property int $min_score
  * @property int|null $salary_min
  * @property int|null $salary_max
  * @property Carbon|null $last_searched_at
  */
-#[Fillable(['locations', 'remote_preference', 'keywords', 'exclusions', 'feeds', 'min_score', 'salary_min', 'salary_max', 'last_searched_at'])]
+#[Fillable(['locations', 'remote_preference', 'keywords', 'exclusions', 'feeds', 'boards', 'min_score', 'salary_min', 'salary_max', 'last_searched_at'])]
 class JobSearchPreference extends Model
 {
     public const string REMOTE_ANY = 'any';
@@ -62,6 +63,7 @@ class JobSearchPreference extends Model
             'keywords' => 'array',
             'exclusions' => 'array',
             'feeds' => 'array',
+            'boards' => 'array',
             'min_score' => 'integer',
             'salary_min' => 'integer',
             'salary_max' => 'integer',

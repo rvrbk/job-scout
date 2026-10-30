@@ -20,6 +20,7 @@ class JobSearchController extends Controller
             'keywords' => [],
             'exclusions' => [],
             'feeds' => [],
+            'boards' => [],
             ...array_filter($request->validated(), fn (mixed $value) => $value !== null),
             'salary_min' => $request->validated('salary_min'),
             'salary_max' => $request->validated('salary_max'),

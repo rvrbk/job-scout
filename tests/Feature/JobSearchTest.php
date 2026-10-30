@@ -62,6 +62,7 @@ class JobSearchTest extends TestCase
             ]]),
             'remotive.com/*' => Http::response(['jobs' => []]),
             'weworkremotely.com/*' => Http::response('<rss><channel><item><title>Globex: Remote Laravel Engineer</title><link>https://example.com/w-1</link><guid>w-1</guid><description>Remote work</description></item></channel></rss>'),
+            '*' => Http::response([]),
         ]);
     }
 
@@ -120,6 +121,7 @@ class JobSearchTest extends TestCase
             ]]),
             'remotive.com/*' => Http::response(['jobs' => []]),
             'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
         ]);
         $this->fakeLlm();
         $user = $this->userWithLedger();
@@ -136,6 +138,7 @@ class JobSearchTest extends TestCase
             'arbeitnow.com/*' => Http::response('nope', 500),
             'remotive.com/*' => Http::response(['jobs' => []]),
             'weworkremotely.com/*' => Http::response('<rss><channel><item><title>Globex: Laravel Engineer</title><link>https://example.com/w-1</link></item></channel></rss>'),
+            '*' => Http::response([]),
         ]);
         $this->fakeLlm();
         $user = $this->userWithLedger();
@@ -166,6 +169,7 @@ class JobSearchTest extends TestCase
             ]]]),
             'remotive.com/*' => Http::response(['jobs' => []]),
             'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
         ]);
         $this->fakeLlm();
         $user = $this->userWithLedger();
@@ -185,6 +189,7 @@ class JobSearchTest extends TestCase
             'keywords' => 'laravel, vue, Laravel',
             'exclusions' => '',
             'feeds' => "https://example.com/jobs.rss\n",
+            'boards' => "greenhouse:stripe\nLever:palantir, greenhouse:stripe\n",
             'min_score' => 70,
         ])->assertSessionHasNoErrors();
 
@@ -194,7 +199,51 @@ class JobSearchTest extends TestCase
         $this->assertSame(['laravel', 'vue'], $preferences->keywords);
         $this->assertSame([], $preferences->exclusions);
         $this->assertSame(['https://example.com/jobs.rss'], $preferences->feeds);
+        $this->assertSame(['greenhouse:stripe', 'Lever:palantir'], $preferences->boards);
         $this->assertSame(70, $preferences->min_score);
+    }
+
+    public function test_unsupported_company_boards_are_rejected()
+    {
+        $this->actingAs(User::factory()->create())->put(route('jobs.preferences.update'), [
+            'remote_preference' => 'any', 'min_score' => 60, 'boards' => 'indeed:acme',
+        ])->assertSessionHasErrors('boards.0');
+    }
+
+    public function test_company_boards_and_open_apis_are_searched()
+    {
+        Http::fake([
+            'boards-api.greenhouse.io/*' => Http::response(['jobs' => [
+                ['id' => 7, 'title' => 'Laravel Engineer', 'company_name' => 'Stripe', 'location' => ['name' => 'Remote'], 'absolute_url' => 'https://example.com/gh-7', 'content' => '&lt;p&gt;Build things&lt;/p&gt;', 'first_published' => '2026-10-01T10:00:00-04:00'],
+            ]]),
+            'api.lever.co/*' => Http::response([
+                ['id' => 'abc', 'text' => 'Vue Engineer', 'hostedUrl' => 'https://example.com/lv-1', 'categories' => ['location' => 'Berlin'], 'workplaceType' => 'remote', 'descriptionPlain' => 'Frontend', 'createdAt' => now()->getTimestampMs()],
+            ]),
+            'jobicy.com/*' => Http::response(['jobs' => [
+                ['id' => 1, 'jobTitle' => 'PHP Developer', 'companyName' => 'Jobi', 'jobGeo' => 'Europe', 'url' => 'https://example.com/jc-1', 'jobDescription' => '<p>PHP</p>', 'pubDate' => '2026-10-30T03:30:29+00:00'],
+            ]]),
+            'remoteok.com/*' => Http::response([['legal' => 'notice'], ['id' => '9', 'position' => 'Laravel Dev', 'company' => 'ROK', 'location' => '', 'url' => 'https://example.com/rok-9', 'description' => 'x', 'date' => '2026-10-28T21:53:15+00:00']]),
+            'himalayas.app/*' => Http::response(['jobs' => [
+                ['title' => 'Laravel Lead', 'companyName' => 'Him', 'guid' => 'h-1', 'applicationLink' => 'https://example.com/h-1', 'locationRestrictions' => ['Netherlands'], 'description' => 'x', 'pubDate' => 1793346517],
+            ]]),
+            'themuse.com/*' => Http::response(['results' => [
+                ['id' => 5, 'name' => 'Laravel Dev', 'company' => ['name' => 'Muse Co'], 'locations' => [['name' => 'Flexible / Remote']], 'refs' => ['landing_page' => 'https://example.com/m-5'], 'contents' => '<p>x</p>', 'publication_date' => '2026-10-03T18:56:56Z'],
+            ]]),
+            'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
+        ]);
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['boards' => ['greenhouse:stripe', 'lever:palantir', 'bogus:thing'], 'min_score' => 0, 'remote_preference' => 'any']);
+        $this->fakeLlm();
+
+        $result = app(JobSearcher::class)->search($user);
+
+        $this->assertSame([], $result['failed_sources']);
+        $this->assertEqualsCanonicalizing(
+            ['greenhouse:stripe', 'lever:palantir', 'jobicy', 'remoteok', 'himalayas', 'themuse'],
+            $user->jobPostings()->pluck('source')->all(),
+        );
+        $this->assertSame('Build things', $user->jobPostings()->where('source', 'greenhouse:stripe')->value('description'));
     }
 
     public function test_a_salary_expectation_can_be_saved_and_cleared()

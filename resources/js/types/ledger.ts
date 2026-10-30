@@ -46,6 +46,7 @@ export type JobSearchPreferences = {
     keywords: string[];
     exclusions: string[];
     feeds: string[];
+    boards: string[];
     min_score: number;
     salary_min: number | null;
     salary_max: number | null;

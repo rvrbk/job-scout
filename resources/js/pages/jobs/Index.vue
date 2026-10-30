@@ -15,7 +15,6 @@ import type { JobPostingSummary, JobSearchPreferences } from "@/types";
 const props = defineProps<{
     postings: JobPostingSummary[];
     preferences: JobSearchPreferences;
-    adzunaEnabled: boolean;
 }>();
 
 const found = computed(() => props.postings.filter((posting) => posting.found));
@@ -132,10 +131,7 @@ defineOptions({
                     Search preferences
                 </summary>
 
-                <JobSearchPreferencesForm
-                    :preferences="preferences"
-                    :adzuna-enabled="adzunaEnabled"
-                />
+                <JobSearchPreferencesForm :preferences="preferences" />
             </details>
         </section>
 
