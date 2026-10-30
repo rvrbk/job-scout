@@ -12,6 +12,7 @@ use App\Models\LedgerFact;
 use App\Models\User;
 use App\Services\JobSearch\JobSearcher;
 use App\Services\Llm\StructuredLlm;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -193,6 +194,35 @@ class JobSearchTest extends TestCase
 
         Http::assertNothingSent();
         $lock->release();
+    }
+
+    public function test_the_scheduled_search_runs_for_users_with_preferences_and_skips_running_ones()
+    {
+        Http::fake(['remotive.com/*' => Http::response(['jobs' => []])]);
+        $this->fakeLlm();
+        $searched = $this->userWithLedger();
+        $searched->jobSearchPreference()->create(['min_score' => 60]);
+        $busy = $this->userWithLedger();
+        $busy->jobSearchPreference()->create(['min_score' => 60]);
+        $noPreferences = $this->userWithLedger();
+        $lock = Cache::lock(RunJobSearch::lockKey($busy), 60);
+        $lock->get();
+
+        $this->artisan('jobs:search')->assertSuccessful();
+
+        $this->assertNotNull($searched->jobSearchPreference->refresh()->last_searched_at);
+        $this->assertNull($busy->jobSearchPreference->refresh()->last_searched_at);
+        $this->assertNull($noPreferences->jobSearchPreference);
+        $lock->release();
+    }
+
+    public function test_the_search_is_scheduled_every_two_hours()
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event) => str_contains($event->command, 'jobs:search'));
+
+        $this->assertNotNull($event);
+        $this->assertSame('0 */2 * * *', $event->expression);
     }
 
     public function test_preferences_can_be_saved()
