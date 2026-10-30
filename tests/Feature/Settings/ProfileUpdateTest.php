@@ -43,6 +43,30 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_contact_details_can_be_saved_and_must_be_https_links()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '+31 6 12345678',
+            'location' => 'Heerenveen, Netherlands',
+            'github_url' => 'https://github.com/example',
+            'linkedin_url' => 'http://not-secure.example/in/example',
+        ])->assertSessionHasErrors('linkedin_url')->assertSessionDoesntHaveErrors(['github_url', 'phone']);
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '+31 6 12345678',
+            'github_url' => 'https://github.com/example',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('+31 6 12345678', $user->refresh()->phone);
+        $this->assertSame('https://github.com/example', $user->github_url);
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
     {
         $user = User::factory()->create();

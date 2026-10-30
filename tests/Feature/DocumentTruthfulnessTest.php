@@ -90,6 +90,31 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertStringContainsString('### Backend Developer - Acme (Mar 2021 - Present)', $markdown);
         $this->assertStringContainsString('- Cut checkout API response times by 40% through query caching.', $markdown);
         $this->assertStringContainsString('Laravel', $markdown);
+
+        $pdf = $this->actingAs($this->user)
+            ->get(route('documents.export-pdf', $document))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+        $this->assertStringContainsString('.pdf"', $pdf->headers->get('Content-Disposition'));
+    }
+
+    public function test_evidence_links_from_the_ledger_appear_in_the_exports()
+    {
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->entry->update(['evidence_url' => 'https://github.com/example/acme']);
+        $this->fact->update(['evidence_url' => 'https://example.com/proof']);
+
+        $document = $this->runGeneration();
+        $this->actingAs($this->user)->post(route('documents.approve', $document));
+
+        $markdown = $this->actingAs($this->user)->get(route('documents.export', $document))->getContent();
+
+        $this->assertStringContainsString('### [Backend Developer](https://github.com/example/acme) - Acme', $markdown);
+        $this->assertStringContainsString('([source](https://example.com/proof))', $markdown);
+
+        $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk();
     }
 
     public function test_claims_citing_invented_fact_ids_are_flagged_without_asking_the_model()
@@ -231,6 +256,7 @@ class DocumentTruthfulnessTest extends TestCase
             ->assertSessionHasErrors('approve');
 
         $this->actingAs($this->user)->get(route('documents.export', $document))->assertForbidden();
+        $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertForbidden();
         $this->assertNull($document->fresh()->approved_at);
     }
 

@@ -6,6 +6,7 @@ use App\Enums\LedgerEntryType;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use App\Models\User;
+use App\Services\Cv\LedgerSnapshot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -140,5 +141,18 @@ class LedgerTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($intruder)->delete(route('facts.destroy', $fact))->assertForbidden();
+    }
+
+    public function test_standalone_skill_entries_count_as_skills_but_not_as_experience()
+    {
+        $user = User::factory()->create();
+        LedgerEntry::factory()->for($user)->create(['type' => LedgerEntryType::Skill, 'title' => 'Laravel', 'skills' => [], 'confirmed_at' => now()]);
+        LedgerEntry::factory()->for($user)->create(['type' => LedgerEntryType::Skill, 'title' => 'Draft skill', 'skills' => [], 'confirmed_at' => null]);
+
+        $snapshot = LedgerSnapshot::forUser($user);
+
+        $this->assertSame(['Laravel'], $snapshot->skills());
+        $this->assertSame('Laravel', $snapshot->canonicalSkill('laravel'));
+        $this->assertSame([], $snapshot->toPromptArray()['entries']);
     }
 }

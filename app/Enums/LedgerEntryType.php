@@ -9,6 +9,7 @@ enum LedgerEntryType: string
     case Education = 'education';
     case Certification = 'certification';
     case Achievement = 'achievement';
+    case Skill = 'skill';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum LedgerEntryType: string
             self::Education => __('Education'),
             self::Certification => __('Certification'),
             self::Achievement => __('Achievement'),
+            self::Skill => __('Skill'),
         };
     }
 }

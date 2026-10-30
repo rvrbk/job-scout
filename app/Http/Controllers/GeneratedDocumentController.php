@@ -138,6 +138,20 @@ class GeneratedDocumentController extends Controller
         ]);
     }
 
+    public function exportPdf(GeneratedDocument $generatedDocument, DocumentRenderer $renderer): \Illuminate\Http\Response
+    {
+        Gate::authorize('view', $generatedDocument);
+
+        abort_unless($generatedDocument->status === DocumentStatus::Approved, 403, __('Approve the document before exporting it.'));
+
+        $filename = str($generatedDocument->type->value.'-'.$generatedDocument->jobPosting->title)->slug().'.pdf';
+
+        return response($renderer->toPdf($generatedDocument), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
     public function destroy(GeneratedDocument $generatedDocument): RedirectResponse
     {
         Gate::authorize('delete', $generatedDocument);

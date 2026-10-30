@@ -83,12 +83,26 @@ const locked = computed(() => props.document.is_processing);
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <a
-                    v-if="document.status === 'approved'"
-                    :href="GeneratedDocumentController.export.url(document.id)"
-                >
-                    <Button variant="secondary"><Download /> Export .md</Button>
-                </a>
+                <template v-if="document.status === 'approved'">
+                    <a
+                        :href="
+                            GeneratedDocumentController.exportPdf.url(
+                                document.id,
+                            )
+                        "
+                    >
+                        <Button><Download /> Download PDF</Button>
+                    </a>
+                    <a
+                        :href="
+                            GeneratedDocumentController.export.url(document.id)
+                        "
+                    >
+                        <Button variant="secondary"
+                            ><Download /> Export .md</Button
+                        >
+                    </a>
+                </template>
                 <Form
                     v-else
                     v-bind="

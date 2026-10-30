@@ -16,8 +16,13 @@ class JobPostingController extends Controller
 {
     public function index(Request $request): Response
     {
+        $preferences = $request->user()->jobSearchPreference;
+
         $postings = $request->user()->jobPostings()
+            ->visible($preferences->min_score ?? 60)
             ->withCount('documents')
+            ->with('documents:id,job_posting_id,type,status')
+            ->orderByDesc('match_score')
             ->latest()
             ->get();
 
@@ -26,9 +31,34 @@ class JobPostingController extends Controller
                 'id' => $posting->id,
                 'title' => $posting->title,
                 'company' => $posting->company,
+                'location' => $posting->location,
+                'remote' => $posting->remote,
+                'source_url' => $posting->source_url,
+                'found' => $posting->source !== null,
+                'match_score' => $posting->match_score,
+                'match_reason' => $posting->match_reason,
                 'documents_count' => $posting->documents_count,
+                'documents' => $posting->documents
+                    ->map(fn (GeneratedDocument $document) => [
+                        'type' => $document->type->value,
+                        'type_label' => $document->type->label(),
+                        'status' => $document->status->value,
+                    ])
+                    ->values(),
                 'created_at' => $posting->created_at?->toDateString(),
             ]),
+            'preferences' => [
+                'locations' => $preferences?->locations ?? [],
+                'remote_preference' => $preferences?->remote_preference ?? 'any',
+                'keywords' => $preferences?->keywords ?? [],
+                'exclusions' => $preferences?->exclusions ?? [],
+                'feeds' => $preferences?->feeds ?? [],
+                'min_score' => $preferences?->min_score ?? 60,
+                'salary_min' => $preferences?->salary_min,
+                'salary_max' => $preferences?->salary_max,
+                'last_searched_at' => $preferences?->last_searched_at?->toDateTimeString(),
+            ],
+            'adzunaEnabled' => filled(config('services.adzuna.app_id')) && filled(config('services.adzuna.app_key')),
         ]);
     }
 

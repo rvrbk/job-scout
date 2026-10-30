@@ -4,6 +4,10 @@ export type User = {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
+    phone: string | null;
+    location: string | null;
+    github_url: string | null;
+    linkedin_url: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;

@@ -73,6 +73,58 @@ const user = computed(() => page.props.auth.user);
                 <InputError class="mt-2" :message="errors.email" />
             </div>
 
+            <div class="grid gap-2">
+                <Label for="phone">Phone</Label>
+                <Input
+                    id="phone"
+                    type="tel"
+                    class="mt-1 block w-full"
+                    name="phone"
+                    :default-value="user.phone ?? ''"
+                    autocomplete="tel"
+                    placeholder="+31 6 12345678"
+                />
+                <InputError class="mt-2" :message="errors.phone" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="location">Address or location</Label>
+                <Input
+                    id="location"
+                    class="mt-1 block w-full"
+                    name="location"
+                    :default-value="user.location ?? ''"
+                    placeholder="City, Country"
+                />
+                <InputError class="mt-2" :message="errors.location" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="github_url">GitHub profile</Label>
+                <Input
+                    id="github_url"
+                    type="url"
+                    class="mt-1 block w-full"
+                    name="github_url"
+                    :default-value="user.github_url ?? ''"
+                    placeholder="Your GitHub profile link"
+                />
+                <InputError class="mt-2" :message="errors.github_url" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="linkedin_url">LinkedIn profile</Label>
+                <Input
+                    id="linkedin_url"
+                    type="url"
+                    class="mt-1 block w-full"
+                    name="linkedin_url"
+                    :default-value="user.linkedin_url ?? ''"
+                    placeholder="Your LinkedIn profile link"
+                />
+                <InputError class="mt-2" :message="errors.linkedin_url" />
+            </div>
+
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
                 <p class="-mt-4 text-sm text-muted-foreground">
                     Your email address is unverified.

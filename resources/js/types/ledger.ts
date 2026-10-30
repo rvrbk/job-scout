@@ -29,8 +29,27 @@ export type JobPostingSummary = {
     id: number;
     title: string;
     company: string | null;
+    location: string | null;
+    remote: boolean | null;
+    source_url: string | null;
+    found: boolean;
+    match_score: number | null;
+    match_reason: string | null;
     documents_count: number;
+    documents: Pick<DocumentSummary, 'type' | 'type_label' | 'status'>[];
     created_at: string | null;
+};
+
+export type JobSearchPreferences = {
+    locations: string[];
+    remote_preference: 'any' | 'hybrid' | 'remote_only';
+    keywords: string[];
+    exclusions: string[];
+    feeds: string[];
+    min_score: number;
+    salary_min: number | null;
+    salary_max: number | null;
+    last_searched_at: string | null;
 };
 
 export type JobPosting = {

@@ -2,6 +2,7 @@
 
 namespace App\Services\Cv;
 
+use App\Enums\LedgerEntryType;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use App\Models\User;
@@ -26,6 +27,10 @@ final class LedgerSnapshot
     public function __construct(public readonly Collection $entries)
     {
         foreach ($entries as $entry) {
+            if ($entry->type === LedgerEntryType::Skill) {
+                $this->skillsByKey[mb_strtolower(trim($entry->title))] ??= trim($entry->title);
+            }
+
             foreach ($entry->facts as $fact) {
                 $this->factsById[$fact->id] = $fact;
             }
@@ -94,7 +99,7 @@ final class LedgerSnapshot
     public function toPromptArray(): array
     {
         return [
-            'entries' => $this->entries->map(fn (LedgerEntry $entry) => [
+            'entries' => $this->entries->reject(fn (LedgerEntry $entry) => $entry->type === LedgerEntryType::Skill)->values()->map(fn (LedgerEntry $entry) => [
                 'entry_id' => $entry->id,
                 'type' => $entry->type->value,
                 'title' => $entry->title,

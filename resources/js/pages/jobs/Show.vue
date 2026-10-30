@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
-import { ExternalLink, Trash2 } from '@lucide/vue';
-import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
-import JobPostingController from '@/actions/App/Http/Controllers/JobPostingController';
-import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
-import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { show as showDocument } from '@/routes/documents';
-import { index } from '@/routes/jobs';
-import type { DocumentSummary, JobPosting, Option } from '@/types';
+import { Form, Head, Link } from "@inertiajs/vue3";
+import { ExternalLink, Trash2 } from "@lucide/vue";
+import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
+import JobPostingController from "@/actions/App/Http/Controllers/JobPostingController";
+import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
+import Heading from "@/components/Heading.vue";
+import InputError from "@/components/InputError.vue";
+import { Button } from "@/components/ui/button";
+import { show as showDocument } from "@/routes/documents";
+import { index } from "@/routes/jobs";
+import type { DocumentSummary, JobPosting, Option } from "@/types";
 
 const props = defineProps<{
     posting: JobPosting;
@@ -19,12 +19,12 @@ const props = defineProps<{
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Jobs', href: index() }],
+        breadcrumbs: [{ title: "Jobs", href: index() }],
     },
 });
 
 const confirmDelete = () =>
-    window.confirm('Remove this job and every draft made for it?');
+    window.confirm("Remove this job and every draft made for it?");
 </script>
 
 <template>

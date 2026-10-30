@@ -17,6 +17,12 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->profileRules($this->user()->id);
+        return [
+            ...$this->profileRules($this->user()->id),
+            'phone' => ['nullable', 'string', 'max:50'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'github_url' => ['nullable', 'url:https', 'max:255'],
+            'linkedin_url' => ['nullable', 'url:https', 'max:255'],
+        ];
     }
 }

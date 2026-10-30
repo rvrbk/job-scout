@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentClaimController;
 use App\Http\Controllers\GeneratedDocumentController;
 use App\Http\Controllers\JobPostingController;
+use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
 use Illuminate\Support\Facades\Route;
@@ -10,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('ledger', [LedgerEntryController::class, 'index'])->name('ledger.index');
     Route::post('ledger', [LedgerEntryController::class, 'store'])->name('ledger.store');
@@ -22,6 +24,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('facts/{ledgerFact}', [LedgerFactController::class, 'destroy'])->name('facts.destroy');
 
     Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
+    Route::put('jobs/preferences', [JobSearchController::class, 'update'])->name('jobs.preferences.update');
+    Route::post('jobs/search', [JobSearchController::class, 'search'])->name('jobs.search');
+    Route::post('jobs/{jobPosting}/dismiss', [JobSearchController::class, 'dismiss'])->name('jobs.dismiss');
     Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
     Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');
     Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
@@ -31,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('documents/{generatedDocument}/retry', [GeneratedDocumentController::class, 'retry'])->name('documents.retry');
     Route::post('documents/{generatedDocument}/approve', [GeneratedDocumentController::class, 'approve'])->name('documents.approve');
     Route::get('documents/{generatedDocument}/export', [GeneratedDocumentController::class, 'export'])->name('documents.export');
+    Route::get('documents/{generatedDocument}/pdf', [GeneratedDocumentController::class, 'exportPdf'])->name('documents.export-pdf');
     Route::delete('documents/{generatedDocument}', [GeneratedDocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::put('claims/{documentClaim}', [DocumentClaimController::class, 'update'])->name('claims.update');
