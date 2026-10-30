@@ -26,6 +26,20 @@ class JobPostingTest extends TestCase
         $response->assertRedirect(route('jobs.show', $posting));
     }
 
+    public function test_a_posting_is_new_until_it_has_been_opened()
+    {
+        $posting = JobPosting::factory()->create(['source' => 'remotive', 'external_id' => '1', 'match_score' => 90]);
+
+        $this->actingAs($posting->user)
+            ->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('postings.0.is_new', true));
+
+        $this->get(route('jobs.show', $posting))->assertOk();
+
+        $this->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('postings.0.is_new', false));
+    }
+
     public function test_the_owner_can_view_a_posting()
     {
         $posting = JobPosting::factory()->create();

@@ -35,6 +35,7 @@ class JobPostingController extends Controller
                 'remote' => $posting->remote,
                 'source_url' => $posting->source_url,
                 'found' => $posting->source !== null,
+                'is_new' => $posting->seen_at === null,
                 'match_score' => $posting->match_score,
                 'match_reason' => $posting->match_reason,
                 'documents_count' => $posting->documents_count,
@@ -72,6 +73,10 @@ class JobPostingController extends Controller
     public function show(JobPosting $jobPosting): Response
     {
         Gate::authorize('view', $jobPosting);
+
+        if ($jobPosting->seen_at === null) {
+            $jobPosting->forceFill(['seen_at' => now()])->save();
+        }
 
         return Inertia::render('jobs/Show', [
             'posting' => $jobPosting->only(['id', 'title', 'company', 'source_url', 'description']),

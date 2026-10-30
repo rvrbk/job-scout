@@ -57,7 +57,8 @@ defineOptions({
                         class="mt-2 text-xs text-muted-foreground"
                         role="status"
                     >
-                        Checking sources and scoring jobs. This can take a minute.
+                        Checking sources and scoring jobs. This can take a
+                        minute.
                     </p>
                 </Form>
             </div>
@@ -75,7 +76,12 @@ defineOptions({
                 <li
                     v-for="posting in found"
                     :key="posting.id"
-                    class="flex items-start gap-4 p-4"
+                    class="flex items-start gap-4 border-l-2 p-4"
+                    :class="
+                        posting.is_new
+                            ? 'border-l-primary bg-primary/5'
+                            : 'border-l-transparent'
+                    "
                 >
                     <Badge
                         :variant="
@@ -87,7 +93,18 @@ defineOptions({
                         >{{ posting.match_score }}</Badge
                     >
                     <Link :href="show(posting.id)" class="min-w-0 flex-1">
-                        <p class="font-medium">{{ posting.title }}</p>
+                        <p
+                            :class="
+                                posting.is_new ? 'font-semibold' : 'font-medium'
+                            "
+                        >
+                            {{ posting.title }}
+                            <Badge
+                                v-if="posting.is_new"
+                                class="ml-2 align-middle"
+                                >New</Badge
+                            >
+                        </p>
                         <p class="text-sm text-muted-foreground">
                             {{
                                 [

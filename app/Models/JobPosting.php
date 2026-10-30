@@ -27,8 +27,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $match_reason
  * @property Carbon|null $matched_at
  * @property Carbon|null $dismissed_at
+ * @property Carbon|null $seen_at
  */
-#[Fillable(['title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at'])]
+#[Fillable(['title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at', 'seen_at'])]
 class JobPosting extends Model
 {
     /** @use HasFactory<JobPostingFactory> */
@@ -73,6 +74,7 @@ class JobPosting extends Model
             'posted_at' => 'datetime',
             'matched_at' => 'datetime',
             'dismissed_at' => 'datetime',
+            'seen_at' => 'datetime',
             'match_score' => 'integer',
         ];
     }

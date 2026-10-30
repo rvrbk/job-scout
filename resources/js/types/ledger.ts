@@ -33,6 +33,7 @@ export type JobPostingSummary = {
     remote: boolean | null;
     source_url: string | null;
     found: boolean;
+    is_new: boolean;
     match_score: number | null;
     match_reason: string | null;
     documents_count: number;
