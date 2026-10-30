@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\JobSearchPreferenceRequest;
+use App\Jobs\RunJobSearch;
 use App\Models\JobPosting;
 use App\Services\Cv\LedgerSnapshot;
-use App\Services\JobSearch\JobSearcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
@@ -31,7 +32,7 @@ class JobSearchController extends Controller
         return back();
     }
 
-    public function search(Request $request, JobSearcher $searcher): RedirectResponse
+    public function search(Request $request): RedirectResponse
     {
         if (! LedgerSnapshot::forUser($request->user())->hasFacts()) {
             Inertia::flash('toast', ['type' => 'error', 'message' => __('Confirm some facts in your ledger first.')]);
@@ -39,15 +40,18 @@ class JobSearchController extends Controller
             return back();
         }
 
-        // Scoring calls the model once per batch, so this can outlast the default limit.
-        set_time_limit(0);
+        // Scoring calls the model once per batch: too slow for a web request, so it runs after the response.
+        $lock = Cache::lock(RunJobSearch::lockKey($request->user()), 1800);
 
-        $result = $searcher->search($request->user());
+        if (! $lock->get()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => __('A search is already running.')]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice(
-            '{0} No new matches found.|{1} Found 1 new match.|[2,*] Found :count new matches.',
-            $result['matched'],
-        )]);
+            return back();
+        }
+
+        RunJobSearch::dispatchAfterResponse($request->user(), $lock->owner());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Search started. It can take a few minutes; reload the page to see new matches.')]);
 
         return back();
     }

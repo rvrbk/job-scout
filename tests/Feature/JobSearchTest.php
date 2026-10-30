@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\DocumentType;
 use App\Enums\LedgerEntryType;
+use App\Jobs\RunJobSearch;
 use App\Models\GeneratedDocument;
 use App\Models\JobPosting;
 use App\Models\LedgerEntry;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Services\JobSearch\JobSearcher;
 use App\Services\Llm\StructuredLlm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -177,6 +179,20 @@ class JobSearchTest extends TestCase
         $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
 
         $this->assertSame(['Laravel Developer'], $user->jobPostings()->pluck('title')->all());
+    }
+
+    public function test_a_second_search_is_refused_while_one_is_running()
+    {
+        Http::fake();
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $lock = Cache::lock(RunJobSearch::lockKey($user), 60);
+        $lock->get();
+
+        $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
+
+        Http::assertNothingSent();
+        $lock->release();
     }
 
     public function test_preferences_can_be_saved()
