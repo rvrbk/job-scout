@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, login } from '@/routes';
 
 const points = [
     {
@@ -48,9 +48,6 @@ const points = [
                     <Button as-child variant="ghost">
                         <Link :href="login()">Log in</Link>
                     </Button>
-                    <Button as-child>
-                        <Link :href="register()">Get started</Link>
-                    </Button>
                 </template>
             </nav>
         </header>
@@ -72,9 +69,6 @@ const points = [
                 </p>
                 <div v-if="!$page.props.auth.user" class="flex gap-3 pt-2">
                     <Button as-child size="lg">
-                        <Link :href="register()">Create your ledger</Link>
-                    </Button>
-                    <Button as-child size="lg" variant="outline">
                         <Link :href="login()">Log in</Link>
                     </Button>
                 </div>
