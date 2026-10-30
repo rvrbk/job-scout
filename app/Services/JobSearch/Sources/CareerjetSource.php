@@ -28,6 +28,7 @@ class CareerjetSource implements JobSource
         foreach (array_slice($preferences->keywords ?: ['developer'], 0, self::MAX_KEYWORDS) as $keyword) {
             $rows = Http::timeout(20)
                 ->withBasicAuth((string) config('services.careerjet.key'), '')
+                ->withHeaders(['Referer' => config('app.url')])
                 ->get('https://search.api.careerjet.net/v4/query', array_filter([
                     'locale_code' => config('services.careerjet.locale', 'nl_NL'),
                     'keywords' => $keyword,
