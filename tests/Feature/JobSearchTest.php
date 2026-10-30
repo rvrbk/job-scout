@@ -135,6 +135,32 @@ class JobSearchTest extends TestCase
         $this->assertSame(['Laravel Developer (hybrid)'], $user->jobPostings()->pluck('title')->all());
     }
 
+    public function test_hybrid_jobs_only_count_in_the_listed_locations_while_remote_ones_count_everywhere()
+    {
+        $job = fn (string $slug, string $title, string $location, bool $remote, string $description) => [
+            'slug' => $slug, 'title' => $title, 'company_name' => 'A', 'location' => $location, 'remote' => $remote,
+            'url' => "https://example.com/{$slug}", 'description' => $description, 'created_at' => now()->timestamp,
+        ];
+        Http::fake([
+            'arbeitnow.com/*' => Http::response(['data' => [
+                $job('a', 'Hybrid in NL', 'Amsterdam, Netherlands', false, 'Hybrid, 2 days at the office'),
+                $job('b', 'Hybrid in Germany', 'Berlin, Germany', false, 'Hybrid, 2 days at the office'),
+                $job('c', 'Remote in Germany', 'Berlin, Germany', true, 'Work from anywhere'),
+                $job('d', 'On-site in NL', 'Amsterdam, Netherlands', false, 'Five days on site'),
+            ]]),
+            'remotive.com/*' => Http::response(['jobs' => []]),
+            'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
+        ]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['remote_preference' => 'hybrid', 'locations' => ['Netherlands']]);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Remote in Germany'], $user->jobPostings()->pluck('title')->all());
+    }
+
     public function test_a_failing_source_does_not_stop_the_search()
     {
         Http::fake([

@@ -32,8 +32,9 @@ const lines = (items: string[]) => items.join("\n");
                     :default-value="lines(preferences.locations)"
                 />
                 <p class="text-xs text-muted-foreground">
-                    One per line. On-site jobs elsewhere are skipped; remote
-                    jobs are never filtered by location.
+                    One place per line, e.g. Netherlands. Hybrid and on-site
+                    jobs outside these places are skipped; remote jobs are never
+                    filtered by location.
                 </p>
                 <InputError :message="errors.locations" />
             </div>
@@ -109,9 +110,9 @@ const lines = (items: string[]) => items.join("\n");
                 :default-value="lines(preferences.boards)"
             />
             <p class="text-xs text-muted-foreground">
-                One per line as provider:company, where provider is
-                greenhouse, lever, ashby or workable and company is the name
-                in the board's URL.
+                One per line as provider:company, where provider is greenhouse,
+                lever, ashby or workable and company is the name in the board's
+                URL.
             </p>
             <InputError :message="errors.boards" />
         </div>

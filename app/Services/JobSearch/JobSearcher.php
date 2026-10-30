@@ -183,19 +183,24 @@ class JobSearcher
 
         $isRemote = $job->remote === true || str_contains($haystack, 'remote');
 
-        if ($preferences->remote_preference === JobSearchPreference::REMOTE_ONLY) {
-            return $isRemote;
+        // Remote jobs are fine anywhere.
+        if ($isRemote) {
+            return true;
         }
 
-        // Hybrid roles say so in the posting; remote ones are fine too.
-        if ($preferences->remote_preference === JobSearchPreference::REMOTE_HYBRID) {
-            return $isRemote || str_contains($haystack, 'hybrid');
+        if ($preferences->remote_preference === JobSearchPreference::REMOTE_ONLY) {
+            return false;
+        }
+
+        // Hybrid roles say so in the posting, and only count where the user is willing to go to the office.
+        if ($preferences->remote_preference === JobSearchPreference::REMOTE_HYBRID && ! str_contains($haystack, 'hybrid')) {
+            return false;
         }
 
         $locations = $preferences->locations ?? [];
 
-        // A job with no stated location, or a remote one, is never ruled out by location.
-        if ($locations === [] || $isRemote || blank($job->location)) {
+        // A job with no stated location is never ruled out by location.
+        if ($locations === [] || blank($job->location)) {
             return true;
         }
 
