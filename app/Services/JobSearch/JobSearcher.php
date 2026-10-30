@@ -204,8 +204,6 @@ class JobSearcher
             return true;
         }
 
-        $place = mb_strtolower($job->location);
-
-        return collect($locations)->contains(fn (string $location) => str_contains($place, mb_strtolower($location)));
+        return LocationMatcher::matches($job->location, $locations);
     }
 }

@@ -144,6 +144,7 @@ class JobSearchTest extends TestCase
         Http::fake([
             'arbeitnow.com/*' => Http::response(['data' => [
                 $job('a', 'Hybrid in NL', 'Amsterdam, Netherlands', false, 'Hybrid, 2 days at the office'),
+                $job('e', 'Hybrid in a Dutch city', 'Utrecht', false, 'Hybrid, 2 days at the office'),
                 $job('b', 'Hybrid in Germany', 'Berlin, Germany', false, 'Hybrid, 2 days at the office'),
                 $job('c', 'Remote in Germany', 'Berlin, Germany', true, 'Work from anywhere'),
                 $job('d', 'On-site in NL', 'Amsterdam, Netherlands', false, 'Five days on site'),
@@ -158,7 +159,7 @@ class JobSearchTest extends TestCase
 
         app(JobSearcher::class)->search($user->refresh());
 
-        $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Remote in Germany'], $user->jobPostings()->pluck('title')->all());
+        $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Hybrid in a Dutch city', 'Remote in Germany'], $user->jobPostings()->pluck('title')->all());
     }
 
     public function test_a_failing_source_does_not_stop_the_search()
