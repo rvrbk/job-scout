@@ -16,6 +16,7 @@ use App\Services\JobSearch\Sources\RemoteOkSource;
 use App\Services\JobSearch\Sources\RemotiveSource;
 use App\Services\JobSearch\Sources\RssSource;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -60,7 +61,7 @@ class JobSearcher
 
         $candidates = collect($found)
             ->unique(fn (FoundJob $job) => "{$job->source}|{$job->externalId}")
-            ->reject(fn (FoundJob $job) => $existing->has("{$job->source}|{$job->externalId}"))
+            ->reject(fn (FoundJob $job) => $existing->has("{$job->source}|".Str::limit($job->externalId, 255, '')))
             ->filter(fn (FoundJob $job) => $this->passes($job, $preferences))
             ->sortByDesc(fn (FoundJob $job) => $job->postedAt?->getTimestamp() ?? 0)
             ->take(self::MAX_NEW_PER_RUN)
@@ -74,13 +75,13 @@ class JobSearcher
             $job = $candidates[$index];
 
             $user->jobPostings()->create([
-                'title' => $job->title,
-                'company' => $job->company,
+                'title' => Str::limit($job->title, 255, ''),
+                'company' => $job->company === null ? null : Str::limit($job->company, 255, ''),
                 'location' => $job->location,
                 'remote' => $job->remote,
                 'source_url' => $job->url,
                 'source' => $job->source,
-                'external_id' => $job->externalId,
+                'external_id' => Str::limit($job->externalId, 255, ''),
                 'description' => $job->description,
                 'posted_at' => $job->postedAt,
                 'match_score' => $match['score'],

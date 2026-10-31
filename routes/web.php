@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
     Route::put('jobs/preferences', [JobSearchController::class, 'update'])->name('jobs.preferences.update');
     Route::post('jobs/search', [JobSearchController::class, 'search'])->name('jobs.search');
+    Route::post('jobs/{jobPosting}/save', [JobSearchController::class, 'save'])->name('jobs.save');
     Route::post('jobs/{jobPosting}/dismiss', [JobSearchController::class, 'dismiss'])->name('jobs.dismiss');
     Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
     Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');

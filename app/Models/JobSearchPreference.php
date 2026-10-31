@@ -19,11 +19,15 @@ use Illuminate\Support\Carbon;
  * @property int $min_score
  * @property int|null $salary_min
  * @property int|null $salary_max
+ * @property string $salary_currency
  * @property Carbon|null $last_searched_at
  */
-#[Fillable(['locations', 'remote_preference', 'keywords', 'exclusions', 'feeds', 'boards', 'min_score', 'salary_min', 'salary_max', 'last_searched_at'])]
+#[Fillable(['locations', 'remote_preference', 'keywords', 'exclusions', 'feeds', 'boards', 'min_score', 'salary_min', 'salary_max', 'salary_currency', 'last_searched_at'])]
 class JobSearchPreference extends Model
 {
+    /** Currencies a salary expectation can be given in. */
+    public const array CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'SEK', 'DKK', 'NOK', 'PLN', 'CZK', 'CAD', 'AUD'];
+
     public const string REMOTE_ANY = 'any';
 
     public const string REMOTE_ONLY = 'remote_only';
@@ -83,10 +87,12 @@ class JobSearchPreference extends Model
      */
     public function salaryExpectation(): ?string
     {
+        $currency = $this->salary_currency ?? 'EUR';
+
         return match (true) {
-            $this->salary_min !== null && $this->salary_max !== null => number_format($this->salary_min).' to '.number_format($this->salary_max),
-            $this->salary_min !== null => 'at least '.number_format($this->salary_min),
-            $this->salary_max !== null => 'up to '.number_format($this->salary_max),
+            $this->salary_min !== null && $this->salary_max !== null => "{$currency} ".number_format($this->salary_min).' to '.number_format($this->salary_max),
+            $this->salary_min !== null => "at least {$currency} ".number_format($this->salary_min),
+            $this->salary_max !== null => "up to {$currency} ".number_format($this->salary_max),
             default => null,
         };
     }

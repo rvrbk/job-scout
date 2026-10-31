@@ -374,11 +374,12 @@ class JobSearchTest extends TestCase
         $user = User::factory()->create();
         $payload = ['remote_preference' => 'any', 'min_score' => 60];
 
-        $this->actingAs($user)->put(route('jobs.preferences.update'), [...$payload, 'salary_min' => '60000', 'salary_max' => '80000'])
+        $this->actingAs($user)->put(route('jobs.preferences.update'), [...$payload, 'salary_min' => '60000', 'salary_max' => '80000', 'salary_currency' => 'USD'])
             ->assertSessionHasNoErrors();
 
         $this->assertSame(60000, $user->jobSearchPreference->salary_min);
-        $this->assertSame('60,000 to 80,000', $user->jobSearchPreference->salaryExpectation());
+        $this->assertSame('USD', $user->jobSearchPreference->salary_currency);
+        $this->assertSame('USD 60,000 to 80,000', $user->jobSearchPreference->salaryExpectation());
 
         $this->actingAs($user)->put(route('jobs.preferences.update'), [...$payload, 'salary_min' => '', 'salary_max' => ''])
             ->assertSessionHasNoErrors();
@@ -430,5 +431,28 @@ class JobSearchTest extends TestCase
         $this->actingAs($posting->user)->post(route('jobs.dismiss', $posting))->assertRedirect();
 
         $this->assertNotNull($posting->refresh()->dismissed_at);
+    }
+
+    public function test_an_unknown_salary_currency_is_rejected()
+    {
+        $this->actingAs(User::factory()->create())->put(route('jobs.preferences.update'), [
+            'remote_preference' => 'any', 'min_score' => 60, 'salary_currency' => 'XXX',
+        ])->assertSessionHasErrors('salary_currency');
+    }
+
+    public function test_a_found_posting_can_be_saved_and_unsaved_only_by_its_owner()
+    {
+        $posting = JobPosting::factory()->create(['source' => 'jobicy', 'external_id' => '1', 'match_score' => 10]);
+
+        $this->actingAs(User::factory()->create())->post(route('jobs.save', $posting))->assertForbidden();
+        $this->actingAs($posting->user)->post(route('jobs.save', $posting))->assertRedirect();
+
+        $this->assertNotNull($posting->refresh()->saved_at);
+        $this->actingAs($posting->user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('postings', fn ($postings) => $postings->contains(fn ($p) => $p['id'] === $posting->id && $p['saved'] && ! $p['found'])));
+
+        $this->actingAs($posting->user)->post(route('jobs.save', $posting));
+
+        $this->assertNull($posting->refresh()->saved_at);
     }
 }

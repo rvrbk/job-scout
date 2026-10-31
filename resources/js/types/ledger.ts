@@ -33,6 +33,7 @@ export type JobPostingSummary = {
     remote: boolean | null;
     source_url: string | null;
     found: boolean;
+    saved: boolean;
     is_new: boolean;
     match_score: number | null;
     match_reason: string | null;
@@ -54,6 +55,8 @@ export type JobSearchPreferences = {
     min_score: number;
     salary_min: number | null;
     salary_max: number | null;
+    salary_currency: string;
+    currencies: string[];
     last_searched_at: string | null;
 };
 

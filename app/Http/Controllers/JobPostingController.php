@@ -35,7 +35,8 @@ class JobPostingController extends Controller
                 'location' => $posting->location,
                 'remote' => $posting->remote,
                 'source_url' => $posting->source_url,
-                'found' => $posting->source !== null,
+                'saved' => $posting->saved_at !== null,
+                'found' => $posting->source !== null && $posting->saved_at === null,
                 'is_new' => $posting->seen_at === null,
                 'match_score' => $posting->match_score,
                 'match_reason' => $posting->match_reason,
@@ -59,7 +60,9 @@ class JobPostingController extends Controller
                 'min_score' => $preferences?->min_score ?? 60,
                 'salary_min' => $preferences?->salary_min,
                 'salary_max' => $preferences?->salary_max,
-                'last_searched_at' => $preferences?->last_searched_at?->toDateTimeString(),
+                'salary_currency' => $preferences?->salary_currency ?? 'EUR',
+                'currencies' => JobSearchPreference::CURRENCIES,
+                'last_searched_at' => $preferences?->last_searched_at?->toIso8601String(),
             ],
         ]);
     }

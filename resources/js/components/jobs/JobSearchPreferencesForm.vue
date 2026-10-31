@@ -225,8 +225,28 @@ const lines = (items: string[]) => items.join("\n");
                         class="w-32"
                         :default-value="preferences.salary_max ?? undefined"
                     />
+                    <select
+                        name="salary_currency"
+                        aria-label="Currency"
+                        :class="selectClass"
+                        :value="preferences.salary_currency"
+                    >
+                        <option
+                            v-for="currency in preferences.currencies"
+                            :key="currency"
+                            :value="currency"
+                        >
+                            {{ currency }}
+                        </option>
+                    </select>
                 </div>
-                <InputError :message="errors.salary_min || errors.salary_max" />
+                <InputError
+                    :message="
+                        errors.salary_min ||
+                        errors.salary_max ||
+                        errors.salary_currency
+                    "
+                />
             </div>
             <Button type="submit" :disabled="processing"
                 >Save preferences</Button

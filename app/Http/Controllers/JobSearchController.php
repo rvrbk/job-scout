@@ -56,6 +56,15 @@ class JobSearchController extends Controller
         return back();
     }
 
+    public function save(JobPosting $jobPosting): RedirectResponse
+    {
+        Gate::authorize('update', $jobPosting);
+
+        $jobPosting->update(['saved_at' => $jobPosting->saved_at === null ? now() : null]);
+
+        return back();
+    }
+
     public function dismiss(JobPosting $jobPosting): RedirectResponse
     {
         Gate::authorize('update', $jobPosting);

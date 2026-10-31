@@ -62,6 +62,7 @@ class JobSearchPreferenceRequest extends FormRequest
             'boards.*' => ['string', 'regex:/^(greenhouse|lever|ashby|workable):[\w-]+$/i', 'max:100'],
             'min_score' => ['required', 'integer', 'between:0,100'],
             'salary_min' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'salary_currency' => ['sometimes', Rule::in(JobSearchPreference::CURRENCIES)],
             'salary_max' => ['nullable', 'integer', 'min:0', 'max:10000000', 'gte:salary_min'],
         ];
     }

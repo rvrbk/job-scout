@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from "@inertiajs/vue3";
-import { ExternalLink, Search, X } from "@lucide/vue";
+import { Bookmark, ExternalLink, Search, X } from "@lucide/vue";
 import { computed } from "vue";
 import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
 import Heading from "@/components/Heading.vue";
@@ -16,6 +16,12 @@ const props = defineProps<{
     postings: JobPostingSummary[];
     preferences: JobSearchPreferences;
 }>();
+
+const lastSearchedAt = computed(() =>
+    props.preferences.last_searched_at
+        ? new Date(props.preferences.last_searched_at).toLocaleString()
+        : null,
+);
 
 const found = computed(() => props.postings.filter((posting) => posting.found));
 const saved = computed(() =>
@@ -38,8 +44,8 @@ defineOptions({
                 <Heading
                     title="Matches"
                     :description="
-                        preferences.last_searched_at
-                            ? `Jobs scored against your confirmed ledger. Last searched ${preferences.last_searched_at}.`
+                        lastSearchedAt
+                            ? `Jobs scored against your confirmed ledger. Last searched ${lastSearchedAt}.`
                             : 'Jobs scored against your confirmed ledger. Run a search to find some.'
                     "
                 />
@@ -132,6 +138,14 @@ defineOptions({
                             ><ExternalLink class="size-4"
                         /></a>
                         <Link
+                            :href="JobSearchController.save(posting.id)"
+                            as="button"
+                            preserve-scroll
+                            class="p-2 text-muted-foreground hover:text-foreground"
+                            title="Save job"
+                            ><Bookmark class="size-4"
+                        /></Link>
+                        <Link
                             :href="JobSearchController.dismiss(posting.id)"
                             as="button"
                             preserve-scroll
@@ -155,13 +169,17 @@ defineOptions({
         <section class="space-y-4">
             <Heading title="Saved jobs" />
             <p v-if="saved.length === 0" class="text-sm text-muted-foreground">
-                No jobs yet.
+                No saved jobs yet. Use the bookmark on a match to keep it here.
             </p>
             <ul class="divide-y rounded-xl border">
-                <li v-for="posting in saved" :key="posting.id">
+                <li
+                    v-for="posting in saved"
+                    :key="posting.id"
+                    class="flex items-center"
+                >
                     <Link
                         :href="show(posting.id)"
-                        class="flex items-center justify-between gap-4 p-4 hover:bg-muted/50"
+                        class="flex min-w-0 flex-1 items-center justify-between gap-4 p-4 hover:bg-muted/50"
                     >
                         <div>
                             <p class="font-medium">{{ posting.title }}</p>
@@ -178,6 +196,15 @@ defineOptions({
                             >No drafts</span
                         >
                     </Link>
+                    <Link
+                        v-if="posting.saved"
+                        :href="JobSearchController.save(posting.id)"
+                        as="button"
+                        preserve-scroll
+                        class="p-2 pr-4 text-primary hover:text-muted-foreground"
+                        title="Remove from saved"
+                        ><Bookmark class="size-4 fill-current"
+                    /></Link>
                 </li>
             </ul>
         </section>

@@ -28,22 +28,23 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $matched_at
  * @property Carbon|null $dismissed_at
  * @property Carbon|null $seen_at
+ * @property Carbon|null $saved_at
  */
-#[Fillable(['title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at', 'seen_at'])]
+#[Fillable(['title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at', 'seen_at', 'saved_at'])]
 class JobPosting extends Model
 {
     /** @use HasFactory<JobPostingFactory> */
     use HasFactory;
 
     /**
-     * Jobs worth showing: pasted by hand, or found by the search and scored at or above the threshold.
+     * Jobs worth showing: pasted by hand, saved, or found by the search and scored at or above the threshold.
      *
      * @param  Builder<JobPosting>  $query
      */
     public function scopeVisible(Builder $query, int $minScore): void
     {
         $query->whereNull('dismissed_at')
-            ->where(fn (Builder $query) => $query->whereNull('source')->orWhere('match_score', '>=', $minScore));
+            ->where(fn (Builder $query) => $query->whereNull('source')->orWhereNotNull('saved_at')->orWhere('match_score', '>=', $minScore));
     }
 
     /**
@@ -75,6 +76,7 @@ class JobPosting extends Model
             'matched_at' => 'datetime',
             'dismissed_at' => 'datetime',
             'seen_at' => 'datetime',
+            'saved_at' => 'datetime',
             'match_score' => 'integer',
         ];
     }
