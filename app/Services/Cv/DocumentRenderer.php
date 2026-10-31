@@ -80,8 +80,7 @@ class DocumentRenderer
         return [
             ...$this->letterhead($document),
             'summary' => implode(' ', $text($claims->get(DocumentClaim::SECTION_SUMMARY, collect()))),
-            'experience' => $claims->get(DocumentClaim::SECTION_EXPERIENCE, collect())
-                ->groupBy('group')
+            'experience' => $this->experienceGroups($claims)
                 ->map(fn (Collection $bullets) => [
                     ...$this->entryHeading($bullets->first()->entry),
                     'bullets' => $bullets->map(fn (DocumentClaim $claim) => [
@@ -185,7 +184,7 @@ class DocumentRenderer
             $lines[] = '';
         }
 
-        $experience = $claims->get(DocumentClaim::SECTION_EXPERIENCE, collect())->groupBy('group');
+        $experience = $this->experienceGroups($claims);
 
         if ($experience->isNotEmpty()) {
             $lines[] = '## '.__('Experience');
@@ -237,6 +236,24 @@ class DocumentRenderer
         return $paragraphs
             ->map(fn (Collection $sentences) => $sentences->pluck('text')->implode(' '))
             ->implode("\n\n")."\n";
+    }
+
+    /**
+     * The experience bullets grouped per ledger entry, newest first: by start date, then end date, with entries
+     * that have no start date last, in the order the model gave them.
+     *
+     * @param  Collection<string, Collection<int, DocumentClaim>>  $claims  the claims keyed by section
+     * @return Collection<int, Collection<int, DocumentClaim>>
+     */
+    private function experienceGroups(Collection $claims): Collection
+    {
+        $start = fn (Collection $bullets) => $bullets->first()->entry?->started_on?->getTimestamp() ?? PHP_INT_MIN;
+        $end = fn (Collection $bullets) => $bullets->first()->entry?->ended_on?->getTimestamp() ?? PHP_INT_MAX;
+
+        return $claims->get(DocumentClaim::SECTION_EXPERIENCE, collect())
+            ->groupBy('group')
+            ->sort(fn (Collection $a, Collection $b) => [$start($b), $end($b)] <=> [$start($a), $end($a)])
+            ->values();
     }
 
     private function heading(LedgerEntry $entry): string

@@ -13,6 +13,7 @@ use App\Models\JobPosting;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use App\Models\User;
+use App\Services\Cv\DocumentRenderer;
 use App\Services\Llm\StructuredLlm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\FakeStructuredLlm;
@@ -115,6 +116,32 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertStringContainsString('([source](https://example.com/proof))', $markdown);
 
         $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk();
+    }
+
+    public function test_experience_is_listed_newest_first_with_periods_and_undated_entries_last()
+    {
+        $document = GeneratedDocument::factory()->for($this->user)->for($this->posting)->create();
+        $entries = [
+            LedgerEntry::factory()->for($this->user)->create(['title' => 'Undated Project', 'started_on' => null, 'ended_on' => null]),
+            LedgerEntry::factory()->for($this->user)->create(['title' => 'Junior Developer', 'organization' => 'First BV', 'started_on' => '2016-01-01', 'ended_on' => '2019-06-01']),
+            LedgerEntry::factory()->for($this->user)->create(['title' => 'Senior Developer', 'organization' => 'Latest BV', 'started_on' => '2021-03-01', 'ended_on' => null]),
+            LedgerEntry::factory()->for($this->user)->create(['title' => 'Developer', 'organization' => 'Middle BV', 'started_on' => '2019-07-01', 'ended_on' => '2021-02-01']),
+        ];
+
+        foreach ($entries as $group => $entry) {
+            DocumentClaim::factory()->for($document, 'document')->withStatus(ClaimStatus::Supported)->create([
+                'ledger_entry_id' => $entry->id, 'section' => DocumentClaim::SECTION_EXPERIENCE, 'group' => $group, 'text' => "Did work at {$entry->title}.",
+            ]);
+        }
+
+        $markdown = app(DocumentRenderer::class)->toMarkdown($document);
+
+        $this->assertStringContainsString('### Senior Developer - Latest BV (Mar 2021 - Present)', $markdown);
+        $this->assertStringContainsString('### Junior Developer - First BV (Jan 2016 - Jun 2019)', $markdown);
+        $this->assertSame(
+            ['Senior Developer', 'Developer', 'Junior Developer', 'Undated Project'],
+            collect(['Senior Developer', 'Developer', 'Junior Developer', 'Undated Project'])->sortBy(fn (string $title) => strpos($markdown, "### {$title}"))->values()->all(),
+        );
     }
 
     public function test_claims_citing_invented_fact_ids_are_flagged_without_asking_the_model()
