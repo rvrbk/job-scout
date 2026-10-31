@@ -33,9 +33,11 @@ class DocumentRenderer
     {
         $document->loadMissing(['claims.entry', 'claims.facts', 'user']);
 
+        $shared = ['fonts' => resource_path('fonts'), 'style' => $document->style->value];
+
         $html = $document->type === DocumentType::Cv
-            ? view('pdf.cv', [...$this->cvViewData($document), 'fonts' => resource_path('fonts')])->render()
-            : view('pdf.cover-letter', [...$this->coverLetterViewData($document), 'fonts' => resource_path('fonts')])->render();
+            ? view('pdf.cv', [...$this->cvViewData($document), ...$shared])->render()
+            : view('pdf.cover-letter', [...$this->coverLetterViewData($document), ...$shared])->render();
 
         $options = new Options;
         $options->set('defaultFont', 'Noto Sans');

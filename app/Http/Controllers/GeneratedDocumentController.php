@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentStatus;
+use App\Enums\DocumentStyle;
 use App\Enums\DocumentType;
 use App\Jobs\GenerateDocument;
 use App\Models\DocumentClaim;
@@ -30,6 +31,7 @@ class GeneratedDocumentController extends Controller
 
         $validated = $request->validate([
             'type' => ['required', Rule::enum(DocumentType::class)],
+            'style' => ['nullable', Rule::enum(DocumentStyle::class)],
         ]);
 
         if (! LedgerSnapshot::forUser($request->user())->hasFacts()) {
@@ -41,6 +43,7 @@ class GeneratedDocumentController extends Controller
         $document = $request->user()->generatedDocuments()->create([
             'job_posting_id' => $jobPosting->id,
             'type' => $validated['type'],
+            'style' => $validated['style'] ?? DocumentStyle::Classic,
             'status' => DocumentStatus::Generating,
         ]);
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\ClaimKind;
 use App\Enums\ClaimStatus;
 use App\Enums\DocumentStatus;
+use App\Enums\DocumentStyle;
 use App\Enums\LedgerEntryType;
 use App\Jobs\GenerateDocument;
 use App\Models\DocumentClaim;
@@ -405,5 +406,40 @@ class DocumentTruthfulnessTest extends TestCase
             fn (array $sentence) => ['claim_id' => $sentence['claim_id'], 'supported' => true, 'reason' => 'Supported by the cited facts.'],
             FakeStructuredLlm::payload($prompt, 'sentences'),
         )];
+    }
+
+    public function test_the_chosen_style_is_stored_and_every_style_exports_a_pdf()
+    {
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'bold']);
+
+        $document = GeneratedDocument::sole();
+        $this->assertSame(DocumentStyle::Bold, $document->style);
+        $this->actingAs($this->user)->post(route('documents.approve', $document));
+
+        foreach (DocumentStyle::cases() as $style) {
+            $document->update(['style' => $style]);
+
+            $pdf = $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk()->getContent();
+
+            $this->assertStringStartsWith('%PDF-', $pdf);
+
+            if ($dir = getenv('STYLE_PREVIEW_DIR')) {
+                file_put_contents("{$dir}/{$style->value}.pdf", $pdf);
+            }
+        }
+    }
+
+    public function test_an_unknown_style_is_rejected_and_the_default_is_classic()
+    {
+        $this->actingAs($this->user)
+            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'comic-sans'])
+            ->assertSessionHasErrors('style');
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+
+        $this->assertSame(DocumentStyle::Classic, GeneratedDocument::sole()->style);
     }
 }

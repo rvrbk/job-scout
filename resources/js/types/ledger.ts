@@ -3,6 +3,8 @@ export type Option = {
     label: string;
 };
 
+export type StyleOption = Option & { description: string };
+
 export type LedgerFact = {
     id: number;
     statement: string;

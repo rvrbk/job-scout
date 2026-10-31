@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentStyle;
 use App\Enums\DocumentType;
 use App\Http\Requests\JobPostingRequest;
 use App\Models\GeneratedDocument;
@@ -90,6 +91,11 @@ class JobPostingController extends Controller
                 'type_label' => $document->type->label(),
                 'status' => $document->status->value,
                 'created_at' => $document->created_at?->toDateTimeString(),
+            ]),
+            'documentStyles' => collect(DocumentStyle::cases())->map(fn (DocumentStyle $style) => [
+                'value' => $style->value,
+                'label' => $style->label(),
+                'description' => $style->description(),
             ]),
             'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
                 'value' => $type->value,

@@ -1,21 +1,26 @@
 <script setup lang="ts">
 import { Form, Head, Link } from "@inertiajs/vue3";
 import { ExternalLink, Trash2 } from "@lucide/vue";
+import { ref } from "vue";
 import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
 import JobPostingController from "@/actions/App/Http/Controllers/JobPostingController";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
 import Heading from "@/components/Heading.vue";
 import InputError from "@/components/InputError.vue";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { show as showDocument } from "@/routes/documents";
 import { index } from "@/routes/jobs";
-import type { DocumentSummary, JobPosting, Option } from "@/types";
+import type { DocumentSummary, JobPosting, Option, StyleOption } from "@/types";
 
 const props = defineProps<{
     posting: JobPosting;
     documents: DocumentSummary[];
     documentTypes: Option[];
+    documentStyles: StyleOption[];
 }>();
+
+const style = ref(props.documentStyles[0]?.value ?? "classic");
 
 defineOptions({
     layout: {
@@ -72,21 +77,46 @@ const confirmDelete = () =>
                     description="Written only from confirmed facts in your ledger, then checked sentence by sentence."
                 />
                 <Form
-                    v-for="documentType in props.documentTypes"
-                    :key="documentType.value"
                     v-bind="GeneratedDocumentController.store.form(posting.id)"
-                    class="inline-block pr-2"
+                    class="space-y-3"
                     v-slot="{ errors, processing }"
                 >
-                    <input
-                        type="hidden"
-                        name="type"
-                        :value="documentType.value"
-                    />
-                    <Button type="submit" :disabled="processing">
-                        Draft {{ documentType.label }}
-                    </Button>
-                    <InputError :message="errors.type" class="mt-2" />
+                    <div class="grid gap-1">
+                        <Label for="style">PDF style</Label>
+                        <select
+                            id="style"
+                            name="style"
+                            v-model="style"
+                            class="h-9 w-fit rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
+                        >
+                            <option
+                                v-for="option in documentStyles"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                        <p class="text-xs text-muted-foreground">
+                            {{
+                                documentStyles.find((o) => o.value === style)
+                                    ?.description
+                            }}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            v-for="documentType in documentTypes"
+                            :key="documentType.value"
+                            type="submit"
+                            name="type"
+                            :value="documentType.value"
+                            :disabled="processing"
+                        >
+                            Draft {{ documentType.label }}
+                        </Button>
+                    </div>
+                    <InputError :message="errors.type || errors.style" />
                 </Form>
             </div>
 
