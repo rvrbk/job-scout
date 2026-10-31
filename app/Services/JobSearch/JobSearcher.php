@@ -184,9 +184,9 @@ class JobSearcher
 
         $isRemote = $job->remote === true || str_contains($haystack, 'remote');
 
-        // Remote jobs are fine anywhere.
+        // Remote jobs are fine anywhere, unless they are only open to people in places the user didn't list.
         if ($isRemote) {
-            return true;
+            return $this->remoteReaches($job, $preferences);
         }
 
         $mode = $this->modeFor($job, $preferences);
@@ -194,6 +194,22 @@ class JobSearcher
         return str_contains($haystack, 'hybrid')
             ? JobSearchPreference::acceptsHybrid($mode)
             : JobSearchPreference::acceptsOnSite($mode);
+    }
+
+    /**
+     * Many remote jobs are only open to people in one country ("Remote, US"). Such a job is out when none of the
+     * countries it names are in the user's listed places. A job that names no recognisable place, or a user with no
+     * listed places, can't be judged and passes.
+     */
+    private function remoteReaches(FoundJob $job, JobSearchPreference $preferences): bool
+    {
+        $places = $preferences->placeNames();
+
+        if ($places === [] || blank($job->location) || LocationMatcher::countriesIn($job->location) === []) {
+            return true;
+        }
+
+        return LocationMatcher::matches($job->location, $places);
     }
 
     /**

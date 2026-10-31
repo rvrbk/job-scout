@@ -147,6 +147,7 @@ class JobSearchTest extends TestCase
                 $job('e', 'Hybrid in a Dutch city', 'Utrecht', false, 'Hybrid, 2 days at the office'),
                 $job('b', 'Hybrid in Germany', 'Berlin, Germany', false, 'Hybrid, 2 days at the office'),
                 $job('c', 'Remote in Germany', 'Berlin, Germany', true, 'Work from anywhere'),
+                $job('f', 'Remote, no place', '', true, 'Work from anywhere'),
                 $job('d', 'On-site in NL', 'Amsterdam, Netherlands', false, 'Five days on site'),
             ]]),
             'remotive.com/*' => Http::response(['jobs' => []]),
@@ -159,7 +160,7 @@ class JobSearchTest extends TestCase
 
         app(JobSearcher::class)->search($user->refresh());
 
-        $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Hybrid in a Dutch city', 'Remote in Germany'], $user->jobPostings()->pluck('title')->all());
+        $this->assertEqualsCanonicalizing(['Hybrid in NL', 'Hybrid in a Dutch city', 'Remote, no place'], $user->jobPostings()->pluck('title')->all());
     }
 
     public function test_every_listed_place_has_its_own_setting()
@@ -189,7 +190,7 @@ class JobSearchTest extends TestCase
 
         app(JobSearcher::class)->search($user->refresh());
 
-        $this->assertEqualsCanonicalizing(['Job nl-hybrid', 'Job be-onsite', 'Job de-remote'], $user->jobPostings()->pluck('title')->all());
+        $this->assertEqualsCanonicalizing(['Job nl-hybrid', 'Job be-onsite'], $user->jobPostings()->pluck('title')->all());
     }
 
     public function test_preferences_saved_with_plain_place_names_keep_their_old_meaning()
@@ -454,5 +455,41 @@ class JobSearchTest extends TestCase
         $this->actingAs($posting->user)->post(route('jobs.save', $posting));
 
         $this->assertNull($posting->refresh()->saved_at);
+    }
+
+    public function test_remote_jobs_limited_to_places_the_user_did_not_list_are_dropped()
+    {
+        $job = fn (string $slug, string $location) => [
+            'slug' => $slug, 'title' => "Job {$slug}", 'company_name' => 'A', 'location' => $location, 'remote' => true,
+            'url' => "https://example.com/{$slug}", 'description' => 'Remote', 'created_at' => now()->timestamp,
+        ];
+        Http::fake([
+            'arbeitnow.com/*' => Http::response(['data' => [
+                $job('us', 'United States'),
+                $job('us-city', 'Austin, TX'),
+                $job('na', 'North America'),
+                $job('nl', 'Netherlands'),
+                $job('eu', 'Europe'),
+                $job('world', 'Worldwide'),
+                $job('none', 'Remote'),
+            ]]),
+            'remotive.com/*' => Http::response(['jobs' => []]),
+            'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
+            '*' => Http::response([]),
+        ]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['remote_preference' => 'remote_only', 'locations' => [['place' => 'Netherlands', 'mode' => 'hybrid']]]);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertEqualsCanonicalizing(['Job nl', 'Job eu', 'Job world', 'Job none'], $user->jobPostings()->pluck('title')->all());
+
+        $user->jobPostings()->delete();
+        $user->jobSearchPreference->update(['locations' => [['place' => 'United States', 'mode' => 'remote_only']]]);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertEqualsCanonicalizing(['Job us', 'Job us-city', 'Job na', 'Job world', 'Job none'], $user->jobPostings()->pluck('title')->all());
     }
 }
