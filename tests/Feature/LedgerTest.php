@@ -155,4 +155,15 @@ class LedgerTest extends TestCase
         $this->assertSame('Laravel', $snapshot->canonicalSkill('laravel'));
         $this->assertSame([], $snapshot->toPromptArray()['entries']);
     }
+
+    public function test_periods_that_only_know_years_are_shown_as_years()
+    {
+        $period = fn (?string $start, ?string $end) => LedgerEntry::factory()->make(['started_on' => $start, 'ended_on' => $end])->period();
+
+        $this->assertSame('2023 - 2024', $period('2023-01-01', '2024-12-01'));
+        $this->assertSame('2024 - Present', $period('2024-01-01', null));
+        $this->assertSame('Mar 2021 - Present', $period('2021-03-01', null));
+        $this->assertSame('Jan 2016 - Jun 2019', $period('2016-01-01', '2019-06-01'));
+        $this->assertSame('Mar 2019 - Dec 2021', $period('2019-03-01', '2021-12-01'));
+    }
 }

@@ -58,7 +58,8 @@ class LedgerEntry extends Model
     }
 
     /**
-     * Human-readable period, e.g. "Mar 2021 - Present".
+     * Human-readable period, e.g. "Mar 2021 - Present". A period that runs from January to December (or to the
+     * present) is shown as years only, so a CV that only knows years does not gain months it never claimed.
      */
     public function period(): ?string
     {
@@ -66,9 +67,10 @@ class LedgerEntry extends Model
             return $this->ended_on?->format('M Y');
         }
 
-        $end = $this->ended_on?->format('M Y') ?? __('Present');
+        $yearsOnly = $this->started_on->month === 1 && ($this->ended_on === null || $this->ended_on->month === 12);
+        $format = $yearsOnly ? 'Y' : 'M Y';
 
-        return $this->started_on->format('M Y').' - '.$end;
+        return $this->started_on->format($format).' - '.($this->ended_on?->format($format) ?? __('Present'));
     }
 
     /**
