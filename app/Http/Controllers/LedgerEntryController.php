@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\LedgerEntryType;
 use App\Http\Requests\LedgerEntryRequest;
+use App\Jobs\ImportLedger;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,6 +47,10 @@ class LedgerEntryController extends Controller
                     'confirmed' => $fact->confirmed_at !== null,
                 ]),
             ]),
+            'import' => [
+                'running' => Cache::has(ImportLedger::runningKey($request->user())),
+                'result' => Cache::get(ImportLedger::resultKey($request->user())),
+            ],
             'types' => collect(LedgerEntryType::cases())->map(fn (LedgerEntryType $type) => [
                 'value' => $type->value,
                 'label' => $type->label(),

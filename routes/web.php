@@ -7,6 +7,7 @@ use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
+use App\Http\Controllers\LedgerImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -15,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('ledger', [LedgerEntryController::class, 'index'])->name('ledger.index');
+    Route::post('ledger/import', [LedgerImportController::class, 'store'])->name('ledger.import');
     Route::post('ledger', [LedgerEntryController::class, 'store'])->name('ledger.store');
     Route::put('ledger/{ledgerEntry}', [LedgerEntryController::class, 'update'])->name('ledger.update');
     Route::delete('ledger/{ledgerEntry}', [LedgerEntryController::class, 'destroy'])->name('ledger.destroy');

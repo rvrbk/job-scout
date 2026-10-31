@@ -5,6 +5,14 @@ export type Option = {
 
 export type StyleOption = Option & { description: string };
 
+export type LedgerImport = {
+    running: boolean;
+    result:
+        | { entries: number; facts: number; error?: never }
+        | { error: string; entries?: never; facts?: never }
+        | null;
+};
+
 export type LedgerFact = {
     id: number;
     statement: string;

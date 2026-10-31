@@ -1,25 +1,28 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ExternalLink, Pencil, Plus, Trash2 } from '@lucide/vue';
-import { computed, ref } from 'vue';
-import LedgerEntryController from '@/actions/App/Http/Controllers/LedgerEntryController';
-import LedgerFactController from '@/actions/App/Http/Controllers/LedgerFactController';
-import Heading from '@/components/Heading.vue';
-import LedgerEntryDialog from '@/components/ledger/LedgerEntryDialog.vue';
-import LedgerFactForm from '@/components/ledger/LedgerFactForm.vue';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { index } from '@/routes/ledger';
-import type { LedgerEntry, Option } from '@/types';
+import { Form, Head, Link } from "@inertiajs/vue3";
+import { ExternalLink, Pencil, Plus, Trash2, Upload } from "@lucide/vue";
+import { computed, ref } from "vue";
+import LedgerEntryController from "@/actions/App/Http/Controllers/LedgerEntryController";
+import LedgerImportController from "@/actions/App/Http/Controllers/LedgerImportController";
+import LedgerFactController from "@/actions/App/Http/Controllers/LedgerFactController";
+import Heading from "@/components/Heading.vue";
+import InputError from "@/components/InputError.vue";
+import LedgerEntryDialog from "@/components/ledger/LedgerEntryDialog.vue";
+import LedgerFactForm from "@/components/ledger/LedgerFactForm.vue";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { index } from "@/routes/ledger";
+import type { LedgerEntry, LedgerImport, Option } from "@/types";
 
 const props = defineProps<{
     entries: LedgerEntry[];
     types: Option[];
+    import: LedgerImport;
 }>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Facts ledger', href: index() }],
+        breadcrumbs: [{ title: "Facts ledger", href: index() }],
     },
 });
 
@@ -54,9 +57,63 @@ const confirmedFactCount = computed(
             </LedgerEntryDialog>
         </div>
 
+        <section class="space-y-2 rounded-xl border p-4">
+            <h3 class="text-sm font-medium">Start from an existing CV</h3>
+            <p class="text-xs text-muted-foreground">
+                Upload a PDF, Word or text file. Its jobs, education and skills
+                are added to the ledger next to what you already have, and
+                nothing existing is changed. Everything imported starts as not
+                confirmed, so check it before it can be used in a document.
+            </p>
+            <Form
+                v-bind="LedgerImportController.store.form()"
+                class="flex flex-wrap items-center gap-2"
+                reset-on-success
+                #default="{ errors, processing }"
+            >
+                <input
+                    type="file"
+                    name="cv"
+                    accept=".pdf,.docx,.txt,.md"
+                    required
+                    :disabled="props.import.running"
+                    class="text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
+                />
+                <Button
+                    type="submit"
+                    :disabled="processing || props.import.running"
+                >
+                    <Upload />
+                    {{ props.import.running ? "Importing…" : "Import CV" }}
+                </Button>
+                <InputError :message="errors.cv" class="w-full" />
+            </Form>
+            <p
+                v-if="props.import.running"
+                class="text-xs text-muted-foreground"
+                role="status"
+            >
+                Reading your CV. This can take a minute; reload the page to see
+                the result.
+            </p>
+            <p
+                v-else-if="props.import.result?.error"
+                class="text-sm text-destructive"
+            >
+                {{ props.import.result.error }}
+            </p>
+            <p v-else-if="props.import.result" class="text-sm">
+                Added {{ props.import.result.entries }}
+                {{ props.import.result.entries === 1 ? "entry" : "entries" }}
+                and {{ props.import.result.facts }}
+                {{ props.import.result.facts === 1 ? "fact" : "facts" }}, all
+                waiting for your confirmation.
+            </p>
+        </section>
+
         <p class="text-sm text-muted-foreground">
             {{ confirmedFactCount }} confirmed
-            {{ confirmedFactCount === 1 ? 'fact' : 'facts' }} available for
+            {{ confirmedFactCount === 1 ? "fact" : "facts" }} available for
             generation.
         </p>
 
@@ -91,7 +148,7 @@ const confirmedFactCount = computed(
                         {{
                             [entry.organization, entry.location, entry.period]
                                 .filter(Boolean)
-                                .join(' · ')
+                                .join(" · ")
                         }}
                     </p>
                     <div
