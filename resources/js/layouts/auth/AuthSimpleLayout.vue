@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import PlatformCredit from '@/components/PlatformCredit.vue';
 import { home } from '@/routes';
 
 defineProps<{
@@ -39,5 +40,7 @@ defineProps<{
                 <slot />
             </div>
         </div>
+        <PlatformCredit />
+
     </div>
 </template>

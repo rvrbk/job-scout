@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import PlatformCredit from '@/components/PlatformCredit.vue';
 import { Button } from '@/components/ui/button';
 import { dashboard, login } from '@/routes';
 
@@ -87,5 +88,9 @@ const points = [
                 </li>
             </ul>
         </main>
+
+        <footer class="mx-auto w-full max-w-5xl p-6">
+            <PlatformCredit />
+        </footer>
     </div>
 </template>
