@@ -1,8 +1,10 @@
 <template>
     <a
         href="https://verbeek.ug/"
+        target="_blank"
+        rel="noopener noreferrer"
         class="text-sm text-muted-foreground transition-colors hover:text-foreground"
     >
-        A verbeek.ug platform<span class="text-orange-500">.</span>
+        a verbeek<span class="text-orange-500">.</span>ug platform
     </a>
 </template>
