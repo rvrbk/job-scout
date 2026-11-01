@@ -49,13 +49,13 @@ const lines = (items: string[]) => items.join("\n");
                 <div
                     v-for="(row, index) in locations"
                     :key="row.key"
-                    class="flex items-center gap-2"
+                    class="flex flex-wrap items-center gap-2"
                 >
                     <Input
                         :name="`locations[${index}][place]`"
                         v-model="row.place"
                         placeholder="Netherlands, Europe, Utrecht…"
-                        class="max-w-xs"
+                        class="min-w-48 flex-1 sm:max-w-xs"
                     />
                     <select
                         :name="`locations[${index}][mode]`"
@@ -91,7 +91,7 @@ const lines = (items: string[]) => items.join("\n");
                         <Plus /> Add location
                     </Button>
                 </div>
-                <div class="mt-2 flex items-center gap-2">
+                <div class="mt-2 flex flex-wrap items-center gap-2">
                     <Label for="remote_preference" class="w-28"
                         >Everywhere else</Label
                     >
@@ -203,7 +203,7 @@ const lines = (items: string[]) => items.join("\n");
                 <Label for="salary_min"
                     >Salary expectation (gross per year)</Label
                 >
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <Input
                         id="salary_min"
                         name="salary_min"

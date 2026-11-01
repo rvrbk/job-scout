@@ -26,7 +26,13 @@ use Illuminate\Support\Carbon;
 class JobSearchPreference extends Model
 {
     /** Currencies a salary expectation can be given in. */
-    public const array CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'SEK', 'DKK', 'NOK', 'PLN', 'CZK', 'CAD', 'AUD'];
+    public const array CURRENCIES = [
+        'EUR', 'USD', 'GBP', 'CHF', 'SEK', 'DKK', 'NOK', 'PLN', 'CZK', 'CAD', 'AUD',
+        // African currencies
+        'AOA', 'BIF', 'BWP', 'CDF', 'CVE', 'DJF', 'DZD', 'EGP', 'ERN', 'ETB', 'GHS', 'GMD', 'GNF', 'KES', 'KMF',
+        'LRD', 'LSL', 'LYD', 'MAD', 'MGA', 'MRU', 'MUR', 'MWK', 'MZN', 'NAD', 'NGN', 'RWF', 'SCR', 'SDG', 'SLE',
+        'SOS', 'SSP', 'STN', 'SZL', 'TND', 'TZS', 'UGX', 'XAF', 'XOF', 'ZAR', 'ZMW', 'ZWG',
+    ];
 
     public const string REMOTE_ANY = 'any';
 
