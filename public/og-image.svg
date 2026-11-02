@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f0fdfa"/>
+  <rect x="0" y="0" width="16" height="630" fill="#0f766e"/>
+  <g transform="translate(90 90)">
+    <rect width="88" height="88" rx="20" fill="#0f766e"/>
+    <g transform="translate(16 16) scale(1.4)">
+      <circle cx="20" cy="20" r="15.5" fill="none" stroke="#f0fdfa" stroke-width="3"/>
+      <path fill="#f0fdfa" d="M27.6 12.4 23 23l-10.6 4.6L17 17l10.6-4.6Z"/>
+      <circle cx="20" cy="20" r="2" fill="#0f766e"/>
+    </g>
+    <text x="112" y="62" font-family="DejaVu Sans, Arial, sans-serif" font-size="44" font-weight="700" fill="#134e4a">Job Scout</text>
+  </g>
+  <text x="90" y="330" font-family="DejaVu Sans, Arial, sans-serif" font-size="68" font-weight="700" fill="#134e4a">Applications that only say</text>
+  <text x="90" y="415" font-family="DejaVu Sans, Arial, sans-serif" font-size="68" font-weight="700" fill="#0f766e">what you can back up.</text>
+  <text x="90" y="510" font-family="DejaVu Sans, Arial, sans-serif" font-size="30" fill="#3f5f5b">Find matching jobs, then draft a CV and cover letter where every claim traces to a confirmed fact.</text>
+</svg>

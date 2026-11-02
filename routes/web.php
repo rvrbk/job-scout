@@ -8,9 +8,14 @@ use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
 use App\Http\Controllers\LedgerImportController;
+use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
+
+Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('llms.txt', [SeoController::class, 'llms'])->name('llms');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
