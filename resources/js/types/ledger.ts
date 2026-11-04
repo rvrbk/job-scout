@@ -7,6 +7,8 @@ export type StyleOption = Option & { description: string };
 
 export type LedgerImport = {
     running: boolean;
+    /** What is being processed while running: an uploaded CV or a typed note. */
+    source: 'cv' | 'note' | null;
     result:
         | { entries: number; facts: number; error?: never }
         | { error: string; entries?: never; facts?: never }

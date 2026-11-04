@@ -49,6 +49,7 @@ class LedgerEntryController extends Controller
             ]),
             'import' => [
                 'running' => Cache::has(ImportLedger::runningKey($request->user())),
+                'source' => Cache::get(ImportLedger::runningKey($request->user())),
                 'result' => Cache::get(ImportLedger::resultKey($request->user())),
             ],
             'types' => collect(LedgerEntryType::cases())->map(fn (LedgerEntryType $type) => [

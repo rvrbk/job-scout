@@ -33,7 +33,7 @@ class LedgerImportController extends Controller
 
         ImportLedger::dispatchAfterResponse($request->user(), $text);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Import started. It can take a minute; reload the page to see the entries.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Reading your CV. This can take a minute; the entries appear here when it is done.')]);
 
         return to_route('ledger.index');
     }
@@ -52,7 +52,7 @@ class LedgerImportController extends Controller
 
         ImportLedger::dispatchAfterResponse($request->user(), $request->string('note')->trim()->toString(), true);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Sorting your note. Reload the page in a moment to see what was added.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Sorting your note. What was added appears here in a moment.')]);
 
         return to_route('ledger.index');
     }

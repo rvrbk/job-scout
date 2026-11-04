@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { Form, Head, Link } from "@inertiajs/vue3";
-import { ExternalLink, Pencil, Plus, Sparkles, Trash2, Upload } from "@lucide/vue";
-import { computed, ref } from "vue";
+import { Form, Head, Link, usePoll } from "@inertiajs/vue3";
+import {
+    ExternalLink,
+    Pencil,
+    Plus,
+    Sparkles,
+    Trash2,
+    Upload,
+} from "@lucide/vue";
+import { computed, ref, watch } from "vue";
 import LedgerEntryController from "@/actions/App/Http/Controllers/LedgerEntryController";
 import LedgerImportController from "@/actions/App/Http/Controllers/LedgerImportController";
 import LedgerFactController from "@/actions/App/Http/Controllers/LedgerFactController";
@@ -11,6 +18,10 @@ import LedgerEntryDialog from "@/components/ledger/LedgerEntryDialog.vue";
 import LedgerFactForm from "@/components/ledger/LedgerFactForm.vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { index } from "@/routes/ledger";
 import type { LedgerEntry, LedgerImport, Option } from "@/types";
 
@@ -25,6 +36,21 @@ defineOptions({
         breadcrumbs: [{ title: "Facts ledger", href: index() }],
     },
 });
+
+const { start, stop } = usePoll(
+    3000,
+    { only: ["entries", "import"] },
+    { autoStart: false },
+);
+
+watch(
+    () => props.import.running,
+    (running) => (running ? start() : stop()),
+    { immediate: true },
+);
+
+const submitNote = (event: KeyboardEvent) =>
+    (event.target as HTMLTextAreaElement).form?.requestSubmit();
 
 const editingFactId = ref<number | null>(null);
 const addingFactTo = ref<number | null>(null);
@@ -57,48 +83,64 @@ const confirmedFactCount = computed(
             </LedgerEntryDialog>
         </div>
 
-        <section class="space-y-2 rounded-xl border p-4">
-            <h3 class="text-sm font-medium">Just write it down</h3>
-            <p class="text-xs text-muted-foreground">
-                Type anything about yourself, like a new job, a project or a
-                result. It is sorted into entries and facts, added to an
-                existing entry when it belongs there, and starts as not
-                confirmed.
-            </p>
+        <section class="space-y-4 rounded-xl border p-4">
+            <div class="space-y-1">
+                <h3 class="text-sm font-medium">Add to your ledger</h3>
+                <p class="text-xs text-muted-foreground">
+                    Write anything about yourself, like a new job, a project or
+                    a result. It is sorted into entries and facts, and added to
+                    an existing entry when it belongs there. Everything starts
+                    as not confirmed, so you can check it before a document may
+                    use it.
+                </p>
+            </div>
+
             <Form
                 v-bind="LedgerImportController.note.form()"
                 class="space-y-2"
                 reset-on-success
                 #default="{ errors, processing }"
             >
-                <textarea
+                <Label for="note" class="sr-only"
+                    >What do you want to add?</Label
+                >
+                <Textarea
+                    id="note"
                     name="note"
                     rows="4"
                     maxlength="5000"
                     required
                     :disabled="props.import.running"
-                    placeholder="At Acme I also led the move to Postgres and mentored two juniors."
-                    class="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                    placeholder="e.g. At Acme I led the move to Postgres and mentored two juniors. Since 2022 I also build Rust CLIs."
+                    @keydown.ctrl.enter="submitNote"
+                    @keydown.meta.enter="submitNote"
                 />
-                <Button
-                    type="submit"
-                    :disabled="processing || props.import.running"
-                >
-                    <Sparkles />
-                    {{ props.import.running ? "Sorting…" : "Add to ledger" }}
-                </Button>
+                <div class="flex flex-wrap items-center gap-3">
+                    <Button
+                        type="submit"
+                        :disabled="processing || props.import.running"
+                    >
+                        <Sparkles />
+                        {{
+                            props.import.running &&
+                            props.import.source === "note"
+                                ? "Sorting your note…"
+                                : "Add to ledger"
+                        }}
+                    </Button>
+                    <span class="text-xs text-muted-foreground"
+                        >Ctrl + Enter to send</span
+                    >
+                </div>
                 <InputError :message="errors.note" />
             </Form>
-        </section>
 
-        <section class="space-y-2 rounded-xl border p-4">
-            <h3 class="text-sm font-medium">Start from an existing CV</h3>
-            <p class="text-xs text-muted-foreground">
-                Upload a PDF, Word or text file. Its jobs, education and skills
-                are added to the ledger next to what you already have, and
-                nothing existing is changed. Everything imported starts as not
-                confirmed, so check it before it can be used in a document.
-            </p>
+            <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                <Separator class="flex-1" />
+                or start from an existing CV
+                <Separator class="flex-1" />
+            </div>
+
             <Form
                 v-bind="LedgerImportController.store.form()"
                 class="flex flex-wrap items-center gap-2"
@@ -110,31 +152,57 @@ const confirmedFactCount = computed(
                     name="cv"
                     accept=".pdf,.docx,.txt,.md"
                     required
+                    aria-label="CV file (PDF, Word or text)"
                     :disabled="props.import.running"
                     class="text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
                 />
                 <Button
                     type="submit"
+                    variant="outline"
                     :disabled="processing || props.import.running"
                 >
                     <Upload />
-                    {{ props.import.running ? "Importing…" : "Import CV" }}
+                    {{
+                        props.import.running && props.import.source === "cv"
+                            ? "Reading your CV…"
+                            : "Import CV"
+                    }}
                 </Button>
+                <p class="w-full text-xs text-muted-foreground">
+                    PDF, Word or text, up to 5 MB. Nothing already in your
+                    ledger is changed.
+                </p>
                 <InputError :message="errors.cv" class="w-full" />
             </Form>
+
             <p
                 v-if="props.import.running"
-                class="text-xs text-muted-foreground"
+                class="flex items-center gap-2 text-sm text-muted-foreground"
                 role="status"
             >
-                Reading your CV. This can take a minute; reload the page to see
-                the result.
+                <Spinner />
+                {{
+                    props.import.source === "note"
+                        ? "Sorting your note into entries and facts. This page updates by itself."
+                        : "Reading your CV. This can take a minute and the page updates by itself."
+                }}
             </p>
             <p
                 v-else-if="props.import.result?.error"
                 class="text-sm text-destructive"
             >
                 {{ props.import.result.error }}
+            </p>
+            <p
+                v-else-if="
+                    props.import.result &&
+                    props.import.result.entries === 0 &&
+                    props.import.result.facts === 0
+                "
+                class="text-sm"
+            >
+                Nothing new to add. It is either already in your ledger or did
+                not state anything to record.
             </p>
             <p v-else-if="props.import.result" class="text-sm">
                 Added {{ props.import.result.entries }}

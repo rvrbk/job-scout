@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\LedgerEntryType;
+use App\Jobs\ImportLedger;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use App\Models\User;
@@ -11,6 +12,7 @@ use App\Services\Llm\StructuredLlm;
 use Dompdf\Dompdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -190,6 +192,16 @@ class LedgerImportTest extends TestCase
         $this->assertSame(2, $user->ledgerEntries()->count());
         $this->assertNull($existing->facts()->sole()->confirmed_at);
         $this->assertSame(1, $user->ledgerEntries()->where('type', LedgerEntryType::Skill)->sole()->facts()->count());
+    }
+
+    public function test_the_ledger_page_says_which_kind_of_import_is_running()
+    {
+        $user = User::factory()->create();
+        $this->fakeLlm(['entries' => []]);
+        Cache::put(ImportLedger::runningKey($user), 'note', 60);
+
+        $this->actingAs($user)->get(route('ledger.index'))->assertInertia(fn ($page) => $page
+            ->where('import.running', true)->where('import.source', 'note'));
     }
 
     public function test_a_note_must_not_be_empty_or_too_long()
