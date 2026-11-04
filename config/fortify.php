@@ -161,8 +161,7 @@ return [
     */
 
     'features' => [
-        // Registration is off while the app is single-user.
-        // Features::registration(),
+        // Registration is invitation-only and handled by InvitationController.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

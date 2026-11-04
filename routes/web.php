@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\InvitationRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentClaimController;
 use App\Http\Controllers\GeneratedDocumentController;
@@ -16,6 +17,11 @@ Route::inertia('/', 'Welcome')->name('home');
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('llms.txt', [SeoController::class, 'llms'])->name('llms');
+
+Route::middleware(['guest', 'throttle:10,1'])->group(function () {
+    Route::get('invitations/{token}', [InvitationRegistrationController::class, 'show'])->name('invitations.show');
+    Route::post('invitations/{token}', [InvitationRegistrationController::class, 'store'])->name('invitations.register');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
