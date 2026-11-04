@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
+        @php($gaId = config('services.google_analytics.measurement_id'))
+        @if($gaId)
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            // Page views are sent from the Inertia navigate event in app.ts.
+            gtag('config', '{{ $gaId }}', { send_page_view: false });
+        </script>
+        @endif
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 

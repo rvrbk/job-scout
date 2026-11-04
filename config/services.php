@@ -34,6 +34,10 @@ return [
         'effort' => env('ANTHROPIC_EFFORT', 'high'),
     ],
 
+    'google_analytics' => [
+        'measurement_id' => env('VITE_GA_MEASUREMENT_ID'),
+    ],
+
     'jooble' => [
         'key' => env('JOOBLE_API_KEY'),
     ],

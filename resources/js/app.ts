@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -40,3 +40,15 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
+
+// Inertia navigates without full page loads, so send each visit as a GA page view...
+router.on('navigate', (event) => {
+    if (typeof window.gtag !== 'function') {
+        return;
+    }
+
+    window.gtag('event', 'page_view', {
+        page_path: event.detail.page.url,
+        page_title: document.title,
+    });
+});
