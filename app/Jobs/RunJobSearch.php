@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\JobSearchRun;
 use App\Models\User;
 use App\Services\JobSearch\JobSearcher;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,7 +18,7 @@ class RunJobSearch
 {
     use Dispatchable;
 
-    public function __construct(public User $user, public string $lockOwner) {}
+    public function __construct(public User $user, public string $lockOwner, public string $trigger = JobSearchRun::TRIGGER_MANUAL) {}
 
     public static function lockKey(User $user): string
     {
@@ -29,7 +30,7 @@ class RunJobSearch
         set_time_limit(0);
 
         try {
-            $searcher->search($this->user);
+            $searcher->search($this->user, $this->trigger);
         } catch (Throwable $exception) {
             Log::error("Job search failed: {$exception->getMessage()}");
         } finally {

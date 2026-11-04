@@ -88,6 +88,26 @@ class JobSearchTest extends TestCase
         $this->assertSame(90, $feedJob->match_score);
     }
 
+    public function test_found_jobs_record_the_run_that_found_them()
+    {
+        $this->fakeSources();
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['exclusions' => ['junior'], 'min_score' => 60]);
+
+        app(JobSearcher::class)->search($user->refresh(), 'scheduled');
+
+        $run = $user->jobSearchRuns()->sole();
+        $this->assertSame('scheduled', $run->trigger);
+        $this->assertNotNull($run->finished_at);
+        $this->assertSame(3, $run->scored);
+        $this->assertSame(3, $run->jobPostings()->count());
+
+        $this->actingAs($user)->get(route('jobs.index'))->assertInertia(
+            fn ($page) => $page->where('postings.0.found_by.trigger', 'scheduled')
+        );
+    }
+
     public function test_jobs_already_scored_are_not_scored_again()
     {
         $this->fakeSources();

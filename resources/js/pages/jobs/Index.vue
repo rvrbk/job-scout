@@ -125,6 +125,22 @@ defineOptions({
                         <p v-if="posting.match_reason" class="mt-1 text-sm">
                             {{ posting.match_reason }}
                         </p>
+                        <p
+                            v-if="posting.found_by"
+                            class="mt-1 text-xs text-muted-foreground"
+                        >
+                            Found by the
+                            {{
+                                posting.found_by.trigger === "scheduled"
+                                    ? "scheduled"
+                                    : "manual"
+                            }}
+                            search on
+                            {{ new Date(posting.found_by.at).toLocaleString() }}
+                            <template v-if="posting.source">
+                                · via {{ posting.source }}</template
+                            >
+                        </p>
                         <DocumentBadges :documents="posting.documents" />
                     </Link>
                     <div class="flex items-center gap-1">

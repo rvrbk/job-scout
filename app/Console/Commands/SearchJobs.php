@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\RunJobSearch;
+use App\Models\JobSearchRun;
 use App\Models\User;
 use App\Services\Cv\LedgerSnapshot;
 use Illuminate\Console\Attributes\Description;
@@ -30,7 +31,7 @@ class SearchJobs extends Command
 
             $this->info("Searching for user {$user->id}");
 
-            RunJobSearch::dispatchSync($user, $lock->owner());
+            RunJobSearch::dispatchSync($user, $lock->owner(), JobSearchRun::TRIGGER_SCHEDULED);
         });
 
         return self::SUCCESS;

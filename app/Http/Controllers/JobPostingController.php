@@ -23,7 +23,7 @@ class JobPostingController extends Controller
         $postings = $request->user()->jobPostings()
             ->visible($preferences->min_score ?? 60)
             ->withCount('documents')
-            ->with('documents:id,job_posting_id,type,status')
+            ->with('documents:id,job_posting_id,type,status', 'searchRun:id,trigger,started_at')
             ->orderByDesc('match_score')
             ->latest()
             ->get();
@@ -39,6 +39,11 @@ class JobPostingController extends Controller
                 'saved' => $posting->saved_at !== null,
                 'found' => $posting->source !== null && $posting->saved_at === null,
                 'is_new' => $posting->seen_at === null,
+                'source' => $posting->source,
+                'found_by' => $posting->searchRun === null ? null : [
+                    'trigger' => $posting->searchRun->trigger,
+                    'at' => $posting->searchRun->started_at->toIso8601String(),
+                ],
                 'match_score' => $posting->match_score,
                 'match_reason' => $posting->match_reason,
                 'documents_count' => $posting->documents_count,
@@ -84,7 +89,10 @@ class JobPostingController extends Controller
         }
 
         return Inertia::render('jobs/Show', [
-            'posting' => $jobPosting->only(['id', 'title', 'company', 'source_url', 'description']),
+            'posting' => [
+                ...$jobPosting->only(['id', 'title', 'company', 'source_url', 'description']),
+                'saved' => $jobPosting->saved_at !== null,
+            ],
             'documents' => $jobPosting->documents()->latest()->get()->map(fn (GeneratedDocument $document) => [
                 'id' => $document->id,
                 'type' => $document->type->value,

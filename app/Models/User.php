@@ -57,6 +57,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * @return HasMany<JobSearchRun, $this>
+     */
+    public function jobSearchRuns(): HasMany
+    {
+        return $this->hasMany(JobSearchRun::class);
+    }
+
+    /**
      * @return HasMany<JobPosting, $this>
      */
     public function jobPostings(): HasMany

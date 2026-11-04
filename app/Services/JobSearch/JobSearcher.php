@@ -3,6 +3,7 @@
 namespace App\Services\JobSearch;
 
 use App\Models\JobSearchPreference;
+use App\Models\JobSearchRun;
 use App\Models\User;
 use App\Services\Cv\LedgerSnapshot;
 use App\Services\JobSearch\Sources\ArbeitnowSource;
@@ -40,7 +41,7 @@ class JobSearcher
     /**
      * @return array{fetched: int, scored: int, matched: int, failed_sources: list<string>}
      */
-    public function search(User $user): array
+    public function search(User $user, string $trigger = JobSearchRun::TRIGGER_MANUAL): array
     {
         $preferences = $user->jobSearchPreference ?? new JobSearchPreference([
             'remote_preference' => JobSearchPreference::REMOTE_ANY,
@@ -52,6 +53,8 @@ class JobSearcher
         if (! $snapshot->hasFacts()) {
             throw new RuntimeException(__('Your ledger has no confirmed facts yet.'));
         }
+
+        $run = $user->jobSearchRuns()->create(['trigger' => $trigger, 'started_at' => now()]);
 
         [$found, $failed] = $this->fetch($preferences);
 
@@ -75,6 +78,7 @@ class JobSearcher
             $job = $candidates[$index];
 
             $user->jobPostings()->create([
+                'job_search_run_id' => $run->id,
                 'title' => Str::limit($job->title, 255, ''),
                 'company' => $job->company === null ? null : Str::limit($job->company, 255, ''),
                 'location' => $job->location,
@@ -97,6 +101,14 @@ class JobSearcher
         if ($preferences->exists) {
             $preferences->update(['last_searched_at' => now()]);
         }
+
+        $run->update([
+            'finished_at' => now(),
+            'fetched' => count($found),
+            'scored' => count($scores),
+            'matched' => $matched,
+            'failed_sources' => $failed,
+        ]);
 
         return [
             'fetched' => count($found),

@@ -45,6 +45,8 @@ export type JobPostingSummary = {
     found: boolean;
     saved: boolean;
     is_new: boolean;
+    source: string | null;
+    found_by: { trigger: "scheduled" | "manual"; at: string } | null;
     match_score: number | null;
     match_reason: string | null;
     documents_count: number;
@@ -76,6 +78,7 @@ export type JobPosting = {
     company: string | null;
     source_url: string | null;
     description: string;
+    saved: boolean;
 };
 
 export type DocumentStatus =

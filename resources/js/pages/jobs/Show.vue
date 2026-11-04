@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Form, Head, Link } from "@inertiajs/vue3";
-import { ExternalLink, Trash2 } from "@lucide/vue";
+import { Bookmark, ExternalLink, Trash2 } from "@lucide/vue";
 import { ref } from "vue";
 import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
 import JobPostingController from "@/actions/App/Http/Controllers/JobPostingController";
+import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
 import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
 import Heading from "@/components/Heading.vue";
 import InputError from "@/components/InputError.vue";
@@ -52,6 +53,21 @@ const confirmDelete = () =>
                         title="Open posting"
                         ><ExternalLink class="size-4"
                     /></a>
+                    <Link
+                        :href="JobSearchController.save(posting.id)"
+                        as="button"
+                        preserve-scroll
+                        class="p-2 hover:text-foreground"
+                        :class="
+                            posting.saved
+                                ? 'text-primary'
+                                : 'text-muted-foreground'
+                        "
+                        :title="posting.saved ? 'Remove from saved' : 'Save job'"
+                        ><Bookmark
+                            class="size-4"
+                            :class="{ 'fill-current': posting.saved }"
+                    /></Link>
                     <Link
                         :href="JobPostingController.destroy(posting.id)"
                         as="button"

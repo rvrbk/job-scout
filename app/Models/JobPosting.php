@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $job_search_run_id
  * @property string $title
  * @property string|null $company
  * @property string|null $source_url
@@ -30,7 +31,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $seen_at
  * @property Carbon|null $saved_at
  */
-#[Fillable(['title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at', 'seen_at', 'saved_at'])]
+#[Fillable(['job_search_run_id', 'title', 'company', 'location', 'remote', 'source_url', 'source', 'external_id', 'description', 'posted_at', 'match_score', 'match_reason', 'matched_at', 'dismissed_at', 'seen_at', 'saved_at'])]
 class JobPosting extends Model
 {
     /** @use HasFactory<JobPostingFactory> */
@@ -53,6 +54,14 @@ class JobPosting extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<JobSearchRun, $this>
+     */
+    public function searchRun(): BelongsTo
+    {
+        return $this->belongsTo(JobSearchRun::class, 'job_search_run_id');
     }
 
     /**
