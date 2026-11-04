@@ -12,16 +12,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { show as showDocument } from "@/routes/documents";
 import { index } from "@/routes/jobs";
-import type { DocumentSummary, JobPosting, Option, StyleOption } from "@/types";
+import type { DocumentSummary, JobPosting, Option, StyleOption, ToneOption } from "@/types";
 
 const props = defineProps<{
     posting: JobPosting;
     documents: DocumentSummary[];
     documentTypes: Option[];
     documentStyles: StyleOption[];
+    documentTones: ToneOption[];
 }>();
 
 const style = ref(props.documentStyles[0]?.value ?? "classic");
+const tone = ref(props.documentTones[0]?.value ?? "professional");
 
 defineOptions({
     layout: {
@@ -120,6 +122,29 @@ const confirmDelete = () =>
                             }}
                         </p>
                     </div>
+                    <div class="grid gap-1">
+                        <Label for="tone">Tone</Label>
+                        <select
+                            id="tone"
+                            name="tone"
+                            v-model="tone"
+                            class="h-9 w-fit rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
+                        >
+                            <option
+                                v-for="option in documentTones"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                        <p class="text-xs text-muted-foreground">
+                            {{
+                                documentTones.find((o) => o.value === tone)
+                                    ?.description
+                            }}
+                        </p>
+                    </div>
                     <div class="flex flex-wrap gap-2">
                         <Button
                             v-for="documentType in documentTypes"
@@ -132,7 +157,7 @@ const confirmDelete = () =>
                             Draft {{ documentType.label }}
                         </Button>
                     </div>
-                    <InputError :message="errors.type || errors.style" />
+                    <InputError :message="errors.type || errors.style || errors.tone" />
                 </Form>
             </div>
 

@@ -6,6 +6,7 @@ use App\Enums\ClaimKind;
 use App\Enums\ClaimStatus;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
+use App\Enums\DocumentTone;
 use App\Enums\LedgerEntryType;
 use App\Jobs\GenerateDocument;
 use App\Models\DocumentClaim;
@@ -429,6 +430,24 @@ class DocumentTruthfulnessTest extends TestCase
                 file_put_contents("{$dir}/{$style->value}.pdf", $pdf);
             }
         }
+    }
+
+    public function test_the_chosen_tone_is_stored_and_sent_to_the_model_and_defaults_to_professional()
+    {
+        $this->actingAs($this->user)
+            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'tone' => 'sarcastic'])
+            ->assertSessionHasErrors('tone');
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'tone' => 'playful']);
+
+        $document = GeneratedDocument::sole();
+        $this->assertSame(DocumentTone::Playful, $document->tone);
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+
+        $this->assertSame(DocumentTone::Professional, GeneratedDocument::query()->latest('id')->first()->tone);
     }
 
     public function test_an_unknown_style_is_rejected_and_the_default_is_classic()

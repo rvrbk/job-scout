@@ -75,6 +75,7 @@ class DocumentGenerator
 
         return implode("\n\n", [
             $task,
+            'Tone: '.$document->tone->instruction().' The tone only changes how sentences are worded. It never relaxes the rules about claims, citations and what the facts say.',
             "<job_posting>\nTitle: {$posting->title}\nCompany: {$posting->company}\n\n{$posting->description}\n</job_posting>",
             "<ledger>\n".json_encode($snapshot->toPromptArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n</ledger>",
         ]);

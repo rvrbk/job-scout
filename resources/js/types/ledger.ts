@@ -5,6 +5,8 @@ export type Option = {
 
 export type StyleOption = Option & { description: string };
 
+export type ToneOption = StyleOption;
+
 export type LedgerImport = {
     running: boolean;
     /** What is being processed while running: an uploaded CV or a typed note. */

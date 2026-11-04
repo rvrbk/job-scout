@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentStyle;
+use App\Enums\DocumentTone;
 use App\Enums\DocumentType;
 use App\Http\Requests\JobPostingRequest;
 use App\Models\GeneratedDocument;
@@ -104,6 +105,11 @@ class JobPostingController extends Controller
                 'value' => $style->value,
                 'label' => $style->label(),
                 'description' => $style->description(),
+            ]),
+            'documentTones' => collect(DocumentTone::cases())->map(fn (DocumentTone $tone) => [
+                'value' => $tone->value,
+                'label' => $tone->label(),
+                'description' => $tone->description(),
             ]),
             'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
                 'value' => $type->value,
