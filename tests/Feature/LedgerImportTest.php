@@ -169,4 +169,35 @@ class LedgerImportTest extends TestCase
         $this->actingAs($user)->get(route('ledger.index'))->assertInertia(fn ($page) => $page
             ->where('import.running', false)->has('import.result.error'));
     }
+
+    public function test_a_typed_note_is_sorted_into_the_ledger_as_unconfirmed_facts()
+    {
+        $user = User::factory()->create();
+        $existing = LedgerEntry::factory()->for($user)->create([
+            'type' => LedgerEntryType::Experience, 'title' => 'Backend Developer', 'organization' => 'Acme', 'confirmed_at' => now(),
+        ]);
+        $llm = $this->fakeLlm(['entries' => [
+            $this->row('Backend Developer', 'Acme', ['Mentored two juniors.']),
+            $this->row('Rust', '', ['Wrote a CLI in Rust.'], 'skill'),
+        ]]);
+
+        $this->actingAs($user)
+            ->post(route('ledger.note'), ['note' => 'At Acme I mentored two juniors. Also wrote a Rust CLI.'])
+            ->assertRedirect(route('ledger.index'));
+
+        $this->assertStringContainsString('<note>', $llm->prompt);
+        $this->assertStringContainsString('mentored two juniors', $llm->prompt);
+        $this->assertSame(2, $user->ledgerEntries()->count());
+        $this->assertNull($existing->facts()->sole()->confirmed_at);
+        $this->assertSame(1, $user->ledgerEntries()->where('type', LedgerEntryType::Skill)->sole()->facts()->count());
+    }
+
+    public function test_a_note_must_not_be_empty_or_too_long()
+    {
+        $user = User::factory()->create();
+        $this->fakeLlm(['entries' => []]);
+
+        $this->actingAs($user)->post(route('ledger.note'), ['note' => '  '])->assertSessionHasErrors('note');
+        $this->actingAs($user)->post(route('ledger.note'), ['note' => str_repeat('a', 5001)])->assertSessionHasErrors('note');
+    }
 }

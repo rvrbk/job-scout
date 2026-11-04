@@ -28,16 +28,25 @@ class LedgerImporter
         - Contact details, photos and references are not ledger material.
         PROMPT;
 
+    private const string NOTE_PROMPT = <<<'PROMPT'
+
+        This time the text is not a CV but a short free-form note the candidate typed about themselves, such as a new job, something they built, a skill or a result. Apply the same rules to it: take only what the note states. A note about something that fits an existing entry (same role at the same organization...) adds facts to that entry, using its exact title and organization. A note that mentions no job, project or degree at all becomes facts on a skill or achievement entry.
+        PROMPT;
+
     public function __construct(private StructuredLlm $llm) {}
 
     /**
      * @return array{entries: int, facts: int}
      */
-    public function import(User $user, string $cvText): array
+    public function import(User $user, string $text, bool $isNote = false): array
     {
         $existing = $user->ledgerEntries()->with('facts')->get();
 
-        $output = $this->llm->generate(self::SYSTEM_PROMPT, $this->prompt($cvText, $existing), $this->schema());
+        $output = $this->llm->generate(
+            self::SYSTEM_PROMPT.($isNote ? self::NOTE_PROMPT : ''),
+            $this->prompt($text, $existing, $isNote),
+            $this->schema(),
+        );
 
         $addedEntries = 0;
         $addedFacts = 0;
@@ -93,7 +102,7 @@ class LedgerImporter
     /**
      * @param  iterable<LedgerEntry>  $existing
      */
-    private function prompt(string $cvText, iterable $existing): string
+    private function prompt(string $text, iterable $existing, bool $isNote): string
     {
         $ledger = collect($existing)->map(fn (LedgerEntry $entry) => [
             'type' => $entry->type->value,
@@ -104,9 +113,11 @@ class LedgerImporter
         ])->values()->all();
 
         return implode("\n\n", [
-            'Extract the ledger entries from the CV below.',
+            $isNote ? 'Extract the ledger entries from the note below.' : 'Extract the ledger entries from the CV below.',
             "<existing_ledger>\n".json_encode($ledger, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n</existing_ledger>",
-            "<cv>\n".mb_substr($cvText, 0, self::MAX_CHARACTERS)."\n</cv>",
+            $isNote
+                ? "<note>\n".mb_substr($text, 0, self::MAX_CHARACTERS)."\n</note>"
+                : "<cv>\n".mb_substr($text, 0, self::MAX_CHARACTERS)."\n</cv>",
         ]);
     }
 

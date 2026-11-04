@@ -37,4 +37,23 @@ class LedgerImportController extends Controller
 
         return to_route('ledger.index');
     }
+
+    public function note(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'note' => ['required', 'string', 'max:5000'],
+        ]);
+
+        if (! Cache::add(ImportLedger::runningKey($request->user()), true, 1800)) {
+            throw ValidationException::withMessages(['note' => __('An import is already running.')]);
+        }
+
+        Cache::forget(ImportLedger::resultKey($request->user()));
+
+        ImportLedger::dispatchAfterResponse($request->user(), $request->string('note')->trim()->toString(), true);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Sorting your note. Reload the page in a moment to see what was added.')]);
+
+        return to_route('ledger.index');
+    }
 }

@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Reads an uploaded CV into the ledger after the response is sent, since the model call outlasts a web request.
+ * Reads an uploaded CV or a typed note into the ledger after the response is sent, since the model call outlasts a web request.
  * Like the job search it runs in the web process; the outcome is kept in the cache for the ledger page to show.
  */
 class ImportLedger
 {
     use Dispatchable;
 
-    public function __construct(public User $user, public string $cvText) {}
+    public function __construct(public User $user, public string $text, public bool $isNote = false) {}
 
     public static function runningKey(User $user): string
     {
@@ -34,7 +34,7 @@ class ImportLedger
         set_time_limit(0);
 
         try {
-            $result = $importer->import($this->user, $this->cvText);
+            $result = $importer->import($this->user, $this->text, $this->isNote);
             Cache::put(self::resultKey($this->user), $result, now()->addDay());
         } catch (Throwable $exception) {
             Log::error("Ledger import failed: {$exception->getMessage()}");

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from "@inertiajs/vue3";
-import { ExternalLink, Pencil, Plus, Trash2, Upload } from "@lucide/vue";
+import { ExternalLink, Pencil, Plus, Sparkles, Trash2, Upload } from "@lucide/vue";
 import { computed, ref } from "vue";
 import LedgerEntryController from "@/actions/App/Http/Controllers/LedgerEntryController";
 import LedgerImportController from "@/actions/App/Http/Controllers/LedgerImportController";
@@ -56,6 +56,40 @@ const confirmedFactCount = computed(
                 <Button><Plus /> Add entry</Button>
             </LedgerEntryDialog>
         </div>
+
+        <section class="space-y-2 rounded-xl border p-4">
+            <h3 class="text-sm font-medium">Just write it down</h3>
+            <p class="text-xs text-muted-foreground">
+                Type anything about yourself, like a new job, a project or a
+                result. It is sorted into entries and facts, added to an
+                existing entry when it belongs there, and starts as not
+                confirmed.
+            </p>
+            <Form
+                v-bind="LedgerImportController.note.form()"
+                class="space-y-2"
+                reset-on-success
+                #default="{ errors, processing }"
+            >
+                <textarea
+                    name="note"
+                    rows="4"
+                    maxlength="5000"
+                    required
+                    :disabled="props.import.running"
+                    placeholder="At Acme I also led the move to Postgres and mentored two juniors."
+                    class="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                />
+                <Button
+                    type="submit"
+                    :disabled="processing || props.import.running"
+                >
+                    <Sparkles />
+                    {{ props.import.running ? "Sorting…" : "Add to ledger" }}
+                </Button>
+                <InputError :message="errors.note" />
+            </Form>
+        </section>
 
         <section class="space-y-2 rounded-xl border p-4">
             <h3 class="text-sm font-medium">Start from an existing CV</h3>
