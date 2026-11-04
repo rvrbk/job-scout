@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { BookCheck, Briefcase, LayoutGrid } from '@lucide/vue';
+import { onUnmounted } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -13,6 +14,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as jobsIndex } from '@/routes/jobs';
@@ -38,6 +40,12 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [];
+
+// On mobile the sidebar is a sheet over the page; fold it away once a link has been followed.
+const { setOpenMobile } = useSidebar();
+const stopListening = router.on('navigate', () => setOpenMobile(false));
+
+onUnmounted(stopListening);
 </script>
 
 <template>
