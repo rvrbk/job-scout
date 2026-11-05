@@ -42,11 +42,20 @@ class GeneratedDocumentController extends Controller
             ]);
         }
 
+        $style = DocumentStyle::tryFrom($validated['style'] ?? '') ?? DocumentStyle::Classic;
+        $tone = DocumentTone::tryFrom($validated['tone'] ?? '') ?? DocumentTone::Professional;
+
+        // Remember the choice so the next document starts from the same style and tone.
+        $request->user()->forceFill([
+            'preferred_document_style' => $style,
+            'preferred_document_tone' => $tone,
+        ])->save();
+
         $document = $request->user()->generatedDocuments()->create([
             'job_posting_id' => $jobPosting->id,
             'type' => $validated['type'],
-            'style' => $validated['style'] ?? DocumentStyle::Classic,
-            'tone' => $validated['tone'] ?? DocumentTone::Professional,
+            'style' => $style,
+            'tone' => $tone,
             'status' => DocumentStatus::Generating,
         ]);
 

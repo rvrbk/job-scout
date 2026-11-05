@@ -20,10 +20,12 @@ const props = defineProps<{
     documentTypes: Option[];
     documentStyles: StyleOption[];
     documentTones: ToneOption[];
+    preferredStyle: string | null;
+    preferredTone: string | null;
 }>();
 
-const style = ref(props.documentStyles[0]?.value ?? "classic");
-const tone = ref(props.documentTones[0]?.value ?? "professional");
+const style = ref(props.preferredStyle ?? props.documentStyles[0]?.value ?? "classic");
+const tone = ref(props.preferredTone ?? props.documentTones[0]?.value ?? "professional");
 
 defineOptions({
     layout: {

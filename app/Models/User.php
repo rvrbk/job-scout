@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStyle;
+use App\Enums\DocumentTone;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -25,6 +27,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $github_url
  * @property string|null $linkedin_url
  * @property string|null $writing_sample
+ * @property DocumentStyle|null $preferred_document_style
+ * @property DocumentTone|null $preferred_document_tone
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -99,6 +103,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferred_document_style' => DocumentStyle::class,
+            'preferred_document_tone' => DocumentTone::class,
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

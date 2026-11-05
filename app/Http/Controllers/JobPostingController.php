@@ -111,6 +111,8 @@ class JobPostingController extends Controller
                 'label' => $tone->label(),
                 'description' => $tone->description(),
             ]),
+            'preferredStyle' => request()->user()->preferred_document_style?->value,
+            'preferredTone' => request()->user()->preferred_document_tone?->value,
             'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
                 'value' => $type->value,
                 'label' => $type->label(),

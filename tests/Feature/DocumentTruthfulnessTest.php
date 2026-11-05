@@ -450,6 +450,20 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertSame(DocumentTone::Professional, GeneratedDocument::query()->latest('id')->first()->tone);
     }
 
+    public function test_the_last_chosen_style_and_tone_are_remembered_for_the_next_document()
+    {
+        $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
+            ->assertInertia(fn ($page) => $page->where('preferredTone', null)->where('preferredStyle', null));
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'classic', 'tone' => 'warm']);
+
+        $this->assertSame(DocumentTone::Warm, $this->user->fresh()->preferred_document_tone);
+
+        $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
+            ->assertInertia(fn ($page) => $page->where('preferredTone', 'warm')->where('preferredStyle', 'classic'));
+    }
+
     public function test_the_writing_sample_is_sent_to_the_model_as_a_style_reference_only_when_set()
     {
         $llm = $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
