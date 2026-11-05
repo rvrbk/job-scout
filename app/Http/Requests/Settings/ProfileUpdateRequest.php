@@ -23,6 +23,7 @@ class ProfileUpdateRequest extends FormRequest
             'location' => ['nullable', 'string', 'max:255'],
             'github_url' => ['nullable', 'url:https', 'max:255'],
             'linkedin_url' => ['nullable', 'url:https', 'max:255'],
+            'writing_sample' => ['nullable', 'string', 'min:200', 'max:5000'],
         ];
     }
 }

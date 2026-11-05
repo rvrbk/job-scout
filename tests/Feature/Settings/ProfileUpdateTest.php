@@ -43,6 +43,32 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_a_writing_sample_can_be_saved_cleared_and_must_be_long_enough()
+    {
+        $user = User::factory()->create();
+        $sample = str_repeat('I write plainly and get to the point. ', 8);
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'writing_sample' => 'Too short.',
+        ])->assertSessionHasErrors('writing_sample');
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'writing_sample' => $sample,
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(trim($sample), $user->refresh()->writing_sample);
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'writing_sample' => '',
+        ])->assertSessionHasNoErrors();
+        $this->assertNull($user->refresh()->writing_sample);
+    }
+
     public function test_contact_details_can_be_saved_and_must_be_https_links()
     {
         $user = User::factory()->create();

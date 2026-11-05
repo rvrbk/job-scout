@@ -125,6 +125,25 @@ const user = computed(() => page.props.auth.user);
                 <InputError class="mt-2" :message="errors.linkedin_url" />
             </div>
 
+            <div class="grid gap-2">
+                <Label for="writing_sample">Writing sample</Label>
+                <textarea
+                    id="writing_sample"
+                    name="writing_sample"
+                    rows="8"
+                    maxlength="5000"
+                    :default-value="user.writing_sample ?? ''"
+                    placeholder="Paste something you wrote yourself, like an email, a cover letter or a blog post"
+                    class="mt-1 block w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                />
+                <p class="text-sm text-muted-foreground">
+                    Optional. Your CVs and cover letters will be written to
+                    match your style. Only the style is used, never the
+                    content. At least 200 characters; leave empty to turn off.
+                </p>
+                <InputError class="mt-2" :message="errors.writing_sample" />
+            </div>
+
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
                 <p class="-mt-4 text-sm text-muted-foreground">
                     Your email address is unverified.

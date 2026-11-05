@@ -8,6 +8,7 @@ export type User = {
     location: string | null;
     github_url: string | null;
     linkedin_url: string | null;
+    writing_sample: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;

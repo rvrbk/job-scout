@@ -450,6 +450,21 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertSame(DocumentTone::Professional, GeneratedDocument::query()->latest('id')->first()->tone);
     }
 
+    public function test_the_writing_sample_is_sent_to_the_model_as_a_style_reference_only_when_set()
+    {
+        $llm = $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->runGeneration();
+        $this->assertStringNotContainsString('writing_sample', $llm->calls[0]['prompt']);
+
+        $this->user->update(['writing_sample' => 'I like short sentences. Really short. Mostly.']);
+
+        $llm = $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->runGeneration();
+
+        $this->assertStringContainsString("<writing_sample>\nI like short sentences. Really short. Mostly.\n</writing_sample>", $llm->calls[0]['prompt']);
+        $this->assertStringContainsString('not a source of facts', $llm->calls[0]['prompt']);
+    }
+
     public function test_an_unknown_style_is_rejected_and_the_default_is_classic()
     {
         $this->actingAs($this->user)
