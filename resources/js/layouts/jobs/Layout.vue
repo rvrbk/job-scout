@@ -24,7 +24,7 @@ const { isCurrentUrl } = useCurrentUrl();
         />
 
         <nav
-            class="-mt-2 flex gap-1 overflow-x-auto border-b"
+            class="-mt-2 flex flex-wrap gap-x-1 border-b"
             aria-label="Jobs sections"
         >
             <Link
