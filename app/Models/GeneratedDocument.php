@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
- * @property int $job_posting_id
+ * @property int|null $job_posting_id
  * @property DocumentType $type
  * @property DocumentStyle $style
  * @property DocumentTone $tone
@@ -73,6 +73,14 @@ class GeneratedDocument extends Model
 
         $this->approved_at = null;
         $this->save();
+    }
+
+    /**
+     * What the document is for: the job's title, or a label for a general document.
+     */
+    public function subject(): string
+    {
+        return $this->jobPosting?->title ?? __('General');
     }
 
     public function canBeApproved(): bool

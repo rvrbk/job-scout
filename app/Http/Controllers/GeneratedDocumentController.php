@@ -30,6 +30,19 @@ class GeneratedDocumentController extends Controller
     {
         Gate::authorize('update', $jobPosting);
 
+        return $this->draft($request, $jobPosting);
+    }
+
+    /**
+     * Start drafting a general CV or cover letter from the ledger alone.
+     */
+    public function storeGeneral(Request $request): RedirectResponse
+    {
+        return $this->draft($request, null);
+    }
+
+    private function draft(Request $request, ?JobPosting $jobPosting): RedirectResponse
+    {
         $validated = $request->validate([
             'type' => ['required', Rule::enum(DocumentType::class)],
             'style' => ['nullable', Rule::enum(DocumentStyle::class)],
@@ -52,7 +65,7 @@ class GeneratedDocumentController extends Controller
         ])->save();
 
         $document = $request->user()->generatedDocuments()->create([
-            'job_posting_id' => $jobPosting->id,
+            'job_posting_id' => $jobPosting?->id,
             'type' => $validated['type'],
             'style' => $style,
             'tone' => $tone,
@@ -81,7 +94,7 @@ class GeneratedDocumentController extends Controller
                 'approved_at' => $generatedDocument->approved_at?->toDateTimeString(),
                 'error' => $generatedDocument->error,
                 'gaps' => $generatedDocument->gaps ?? [],
-                'job' => $generatedDocument->jobPosting->only(['id', 'title', 'company']),
+                'job' => $generatedDocument->jobPosting?->only(['id', 'title', 'company']),
                 'claims' => $generatedDocument->claims->map(fn (DocumentClaim $claim) => [
                     'id' => $claim->id,
                     'section' => $claim->section,
@@ -145,7 +158,7 @@ class GeneratedDocumentController extends Controller
 
         abort_unless($generatedDocument->status === DocumentStatus::Approved, 403, __('Approve the document before exporting it.'));
 
-        $filename = str($generatedDocument->type->value.'-'.$generatedDocument->jobPosting->title)->slug().'.md';
+        $filename = str($generatedDocument->type->value.'-'.$generatedDocument->subject())->slug().'.md';
 
         return response($renderer->toMarkdown($generatedDocument), 200, [
             'Content-Type' => 'text/markdown; charset=UTF-8',
@@ -159,7 +172,7 @@ class GeneratedDocumentController extends Controller
 
         abort_unless($generatedDocument->status === DocumentStatus::Approved, 403, __('Approve the document before exporting it.'));
 
-        $filename = str($generatedDocument->type->value.'-'.$generatedDocument->jobPosting->title)->slug().'.pdf';
+        $filename = str($generatedDocument->type->value.'-'.$generatedDocument->subject())->slug().'.pdf';
 
         return response($renderer->toPdf($generatedDocument), 200, [
             'Content-Type' => 'application/pdf',
@@ -174,6 +187,6 @@ class GeneratedDocumentController extends Controller
         $jobPosting = $generatedDocument->jobPosting;
         $generatedDocument->delete();
 
-        return to_route('jobs.show', $jobPosting);
+        return $jobPosting === null ? to_route('jobs.index') : to_route('jobs.show', $jobPosting);
     }
 }

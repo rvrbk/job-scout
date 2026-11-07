@@ -34,6 +34,11 @@ class GeneratedDocumentFactory extends Factory
         return $this->state(fn () => ['status' => $status]);
     }
 
+    public function general(): static
+    {
+        return $this->state(fn () => ['job_posting_id' => null]);
+    }
+
     public function coverLetter(): static
     {
         return $this->state(fn () => ['type' => DocumentType::CoverLetter]);

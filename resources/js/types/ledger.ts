@@ -123,7 +123,7 @@ export type GeneratedDocument = {
     approved_at: string | null;
     error: string | null;
     gaps: { requirement: string; note: string }[];
-    job: { id: number; title: string; company: string | null };
+    job: { id: number; title: string; company: string | null } | null;
     claims: DocumentClaim[];
     markdown: string | null;
 };

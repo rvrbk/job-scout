@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
 
     Route::post('jobs/{jobPosting}/documents', [GeneratedDocumentController::class, 'store'])->name('documents.store');
+    Route::post('documents', [GeneratedDocumentController::class, 'storeGeneral'])->name('documents.store-general');
     Route::get('documents/{generatedDocument}', [GeneratedDocumentController::class, 'show'])->name('documents.show');
     Route::post('documents/{generatedDocument}/retry', [GeneratedDocumentController::class, 'retry'])->name('documents.retry');
     Route::post('documents/{generatedDocument}/approve', [GeneratedDocumentController::class, 'approve'])->name('documents.approve');

@@ -63,21 +63,33 @@ const locked = computed(() => props.document.is_processing);
 </script>
 
 <template>
-    <Head :title="`${document.type_label} – ${document.job.title}`" />
+    <Head
+        :title="`${document.type_label} – ${document.job?.title ?? 'General'}`"
+    />
 
     <div class="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="space-y-2">
                 <Heading
-                    :title="`${document.type_label} for ${document.job.title}`"
-                    :description="document.job.company ?? undefined"
+                    :title="
+                        document.job
+                            ? `${document.type_label} for ${document.job.title}`
+                            : `General ${document.type_label}`
+                    "
+                    :description="document.job?.company ?? undefined"
                 />
                 <div class="flex items-center gap-2">
                     <DocumentStatusBadge :status="document.status" />
                     <Link
-                        :href="showJob(document.job.id)"
+                        :href="
+                            document.job
+                                ? showJob(document.job.id)
+                                : jobsIndex()
+                        "
                         class="text-sm text-muted-foreground underline"
-                        >Back to job</Link
+                        >{{
+                            document.job ? 'Back to job' : 'Back to jobs'
+                        }}</Link
                     >
                 </div>
             </div>
