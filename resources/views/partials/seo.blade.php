@@ -2,7 +2,7 @@
     $siteName = config('app.name', 'Job Scout');
     $indexable = request()->routeIs('home');
     $title = 'Applications that only say what you can back up';
-    $description = 'Find jobs that match your real experience, then draft a CV and cover letter where every claim traces back to a fact you confirmed.';
+    $description = 'Find jobs that match your real experience, or paste or link any vacancy, then draft a CV and cover letter in your own tone where every claim traces back to a fact you confirmed.';
     $canonical = $indexable ? route('home') : url()->current();
     $image = url('og-image.png');
     $schema = [
@@ -37,7 +37,11 @@
                 'featureList' => [
                     'Fact ledger of confirmed experience',
                     'Job search scored against your ledger',
+                    'Add a vacancy by pasting its text or linking to it',
                     'CV and cover letter drafts with every claim checked against confirmed facts',
+                    'General CV and cover letter drafted from the ledger without a job',
+                    'Choice of PDF style and tone, or matching your own writing sample',
+                    'Review and approval gate before export as PDF or Markdown',
                 ],
             ],
         ],

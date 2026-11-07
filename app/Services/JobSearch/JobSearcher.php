@@ -34,6 +34,9 @@ class JobSearcher
 
     private const int MAX_AGE_DAYS = 30;
 
+    /** How long a title and company keep a repost of the same job from resurfacing. */
+    private const int DUPLICATE_WINDOW_DAYS = 90;
+
     private const string DEFAULT_FEED = 'https://weworkremotely.com/categories/remote-programming-jobs.rss';
 
     public function __construct(private JobMatcher $matcher) {}
@@ -62,11 +65,21 @@ class JobSearcher
             ->map(fn ($posting) => "{$posting->source}|{$posting->external_id}")
             ->flip();
 
+        // The same job often comes back under a new ID (a repost) or from another source, so IDs alone aren't enough.
+        $known = $user->jobPostings()
+            ->where('created_at', '>=', now()->subDays(self::DUPLICATE_WINDOW_DAYS))
+            ->get(['title', 'company'])
+            ->map(fn ($posting) => self::fingerprint($posting->title, $posting->company))
+            ->filter()
+            ->flip();
+
         $candidates = collect($found)
             ->unique(fn (FoundJob $job) => "{$job->source}|{$job->externalId}")
             ->reject(fn (FoundJob $job) => $existing->has("{$job->source}|".Str::limit($job->externalId, 255, '')))
+            ->reject(fn (FoundJob $job) => ($print = self::fingerprint($job->title, $job->company)) !== null && $known->has($print))
             ->filter(fn (FoundJob $job) => $this->passes($job, $preferences))
             ->sortByDesc(fn (FoundJob $job) => $job->postedAt?->getTimestamp() ?? 0)
+            ->unique(fn (FoundJob $job) => self::fingerprint($job->title, $job->company) ?? "{$job->source}|{$job->externalId}")
             ->take(self::MAX_NEW_PER_RUN)
             ->values()
             ->all();
@@ -116,6 +129,19 @@ class JobSearcher
             'matched' => $matched,
             'failed_sources' => $failed,
         ];
+    }
+
+    /**
+     * Identifies a job by what a person would call "the same one": its title and company, ignoring case, accents
+     * and punctuation. Null when there is no company, since a title alone would match unrelated jobs.
+     */
+    private static function fingerprint(string $title, ?string $company): ?string
+    {
+        $normalise = fn (string $text): string => trim((string) preg_replace('/[^\p{L}\p{N}]+/u', ' ', mb_strtolower($text)));
+
+        $company = $normalise((string) $company);
+
+        return $company === '' ? null : $normalise($title).'|'.$company;
     }
 
     /**

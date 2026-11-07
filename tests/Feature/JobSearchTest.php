@@ -123,6 +123,52 @@ class JobSearchTest extends TestCase
         $this->assertSame($count, $user->jobPostings()->count());
     }
 
+    public function test_a_repost_or_cross_post_of_a_known_job_is_not_scored_again()
+    {
+        Http::fake([
+            'arbeitnow.com/*' => Http::response(['data' => [
+                // Same title and company as one already stored, but a new ID (a repost) and different punctuation.
+                ['slug' => 'laravel-developer-999', 'title' => 'Laravel  Developer!', 'company_name' => 'ACME', 'location' => 'Amsterdam', 'remote' => false, 'url' => 'https://example.com/n-1', 'description' => 'Build', 'created_at' => now()->timestamp],
+                // Two listings of one new job in the same run (e.g. one per city).
+                ['slug' => 'laravel-lead-1', 'title' => 'Laravel Lead', 'company_name' => 'Globex', 'location' => 'Amsterdam', 'remote' => false, 'url' => 'https://example.com/n-2', 'description' => 'Lead', 'created_at' => now()->timestamp],
+                ['slug' => 'laravel-lead-2', 'title' => 'Laravel Lead', 'company_name' => 'Globex', 'location' => 'Utrecht', 'remote' => false, 'url' => 'https://example.com/n-3', 'description' => 'Lead', 'created_at' => now()->timestamp],
+                // No company: a title alone must not be treated as a duplicate.
+                ['slug' => 'laravel-x-1', 'title' => 'Laravel Developer', 'company_name' => '', 'location' => 'Amsterdam', 'remote' => false, 'url' => 'https://example.com/n-4', 'description' => 'X', 'created_at' => now()->timestamp],
+            ]]),
+            'jobicy.com/*' => Http::response(['jobs' => [
+                // The same job as above, from another source.
+                ['id' => 5, 'jobTitle' => 'Laravel Lead', 'companyName' => 'Globex', 'jobGeo' => 'Europe', 'url' => 'https://example.com/j-1', 'jobDescription' => 'Lead', 'pubDate' => now()->toIso8601String()],
+            ]]),
+            '*' => Http::response([]),
+        ]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['min_score' => 0, 'remote_preference' => 'any']);
+        JobPosting::factory()->for($user)->create(['title' => 'Laravel Developer', 'company' => 'Acme', 'source' => 'remotive', 'external_id' => '1']);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertSame(
+            ['Laravel Developer|Acme', 'Laravel Lead|Globex', 'Laravel Developer|'],
+            $user->jobPostings()->orderBy('id')->get()->map(fn ($p) => $p->title.'|'.$p->company)->all(),
+        );
+    }
+
+    public function test_an_old_posting_does_not_block_the_same_job_much_later()
+    {
+        Http::fake(['arbeitnow.com/*' => Http::response(['data' => [
+            ['slug' => 'again-2', 'title' => 'Laravel Developer', 'company_name' => 'Acme', 'location' => 'Amsterdam', 'remote' => false, 'url' => 'https://example.com/n-9', 'description' => 'Build', 'created_at' => now()->timestamp],
+        ]]), '*' => Http::response([])]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['min_score' => 0, 'remote_preference' => 'any']);
+        JobPosting::factory()->for($user)->create(['title' => 'Laravel Developer', 'company' => 'Acme', 'source' => 'arbeitnow', 'external_id' => 'again-1', 'created_at' => now()->subDays(120)]);
+
+        app(JobSearcher::class)->search($user->refresh());
+
+        $this->assertSame(2, $user->jobPostings()->count());
+    }
+
     public function test_remote_only_drops_on_site_jobs_before_scoring()
     {
         $this->fakeSources();

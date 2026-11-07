@@ -15,12 +15,12 @@ const points = [
     {
         title: 'Jobs that fit you',
         description:
-            'Job Scout searches several sources and scores every posting against your ledger, with the reason and the gaps.',
+            'Job Scout searches several sources and scores every posting against your ledger. Or paste or link any vacancy yourself.',
     },
     {
         title: 'Drafts you can trust',
         description:
-            'Every sentence of a CV or cover letter is checked against the facts it cites before you can download it.',
+            'Every sentence of a CV or cover letter is checked against the facts it cites before you can download it. In your tone, for a job or in general.',
     },
 ];
 </script>

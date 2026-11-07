@@ -35,9 +35,19 @@ const steps: Step[] = [
             'Job Scout searches your sources and scores each posting against your ledger, with the reason for the score and the gaps it sees.',
     },
     {
+        title: 'Bring your own vacancy',
+        description:
+            'Found a job somewhere else? Paste the vacancy or link to it and Job Scout reads out the title, company and requirements. Saved jobs are searchable and sorted by date.',
+    },
+    {
         title: 'Draft with receipts',
         description:
             'A CV or cover letter is written from your confirmed facts. Every sentence is checked against the facts it cites, and anything unsupported is flagged for you.',
+    },
+    {
+        title: 'Make it sound like you',
+        description:
+            'Pick a PDF style and a tone, or give a sample of your own writing so the draft matches your voice. No vacancy yet? Draft a general CV or cover letter from your ledger alone.',
     },
     {
         title: 'Review, approve, download',
