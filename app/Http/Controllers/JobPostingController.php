@@ -24,11 +24,9 @@ class JobPostingController extends Controller
     {
         $preferences = $request->user()->jobSearchPreference;
 
-        $minScore = $preferences->min_score ?? 60;
-
         // Matches the search found and scored well; they stay one list, best score first.
         $found = $request->user()->jobPostings()
-            ->visible($minScore)
+            ->visible($preferences->min_score ?? 60)
             ->whereNotNull('source')
             ->whereNull('saved_at')
             ->withCount('documents')
@@ -37,7 +35,30 @@ class JobPostingController extends Controller
             ->latest()
             ->get();
 
-        // Saved and hand-added jobs: searchable, sorted by date added, paged.
+        return Inertia::render('jobs/Index', [
+            'postings' => $found->map(fn (JobPosting $posting) => $this->summary($posting)),
+            'preferences' => [
+                'locations' => $preferences?->places() ?? [],
+                'remote_preference' => $preferences?->elsewhere() ?? JobSearchPreference::REMOTE_ONLY,
+                'keywords' => $preferences?->keywords ?? [],
+                'exclusions' => $preferences?->exclusions ?? [],
+                'feeds' => $preferences?->feeds ?? [],
+                'boards' => $preferences?->boards ?? [],
+                'min_score' => $preferences?->min_score ?? 60,
+                'salary_min' => $preferences?->salary_min,
+                'salary_max' => $preferences?->salary_max,
+                'salary_currency' => $preferences?->salary_currency ?? 'EUR',
+                'currencies' => JobSearchPreference::CURRENCIES,
+                'last_searched_at' => $preferences?->last_searched_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Saved and hand-added jobs: searchable, sorted by date added, paged.
+     */
+    public function saved(Request $request): Response
+    {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'sort' => ['nullable', 'in:newest,oldest'],
@@ -46,7 +67,7 @@ class JobPostingController extends Controller
         $sort = $filters['sort'] ?? 'newest';
 
         $saved = $request->user()->jobPostings()
-            ->visible($minScore)
+            ->visible($request->user()->jobSearchPreference->min_score ?? 60)
             ->where(fn ($query) => $query->whereNull('source')->orWhereNotNull('saved_at'))
             ->when($term !== '', function ($query) use ($term) {
                 $like = '%'.addcslashes($term, '%_\\').'%';
@@ -64,7 +85,23 @@ class JobPostingController extends Controller
             ->withQueryString()
             ->through(fn (JobPosting $posting) => $this->summary($posting));
 
-        return Inertia::render('jobs/Index', [
+        return Inertia::render('jobs/Saved', [
+            'saved' => $saved,
+            'filters' => ['q' => $term, 'sort' => $sort],
+        ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('jobs/Add');
+    }
+
+    /**
+     * General CVs and cover letters, written from the ledger without a job.
+     */
+    public function documents(Request $request): Response
+    {
+        return Inertia::render('jobs/Documents', [
             'generalDocuments' => $request->user()->generatedDocuments()->whereNull('job_posting_id')->latest()->get()->map(fn (GeneratedDocument $document) => [
                 'id' => $document->id,
                 'type' => $document->type->value,
@@ -73,23 +110,6 @@ class JobPostingController extends Controller
                 'created_at' => $document->created_at?->toDateTimeString(),
             ]),
             ...$this->documentOptions($request),
-            'postings' => $found->map(fn (JobPosting $posting) => $this->summary($posting)),
-            'saved' => $saved,
-            'filters' => ['q' => $term, 'sort' => $sort],
-            'preferences' => [
-                'locations' => $preferences?->places() ?? [],
-                'remote_preference' => $preferences?->elsewhere() ?? JobSearchPreference::REMOTE_ONLY,
-                'keywords' => $preferences?->keywords ?? [],
-                'exclusions' => $preferences?->exclusions ?? [],
-                'feeds' => $preferences?->feeds ?? [],
-                'boards' => $preferences?->boards ?? [],
-                'min_score' => $preferences?->min_score ?? 60,
-                'salary_min' => $preferences?->salary_min,
-                'salary_max' => $preferences?->salary_max,
-                'salary_currency' => $preferences?->salary_currency ?? 'EUR',
-                'currencies' => JobSearchPreference::CURRENCIES,
-                'last_searched_at' => $preferences?->last_searched_at?->toIso8601String(),
-            ],
         ]);
     }
 

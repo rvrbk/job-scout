@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('facts/{ledgerFact}', [LedgerFactController::class, 'destroy'])->name('facts.destroy');
 
     Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
+    Route::get('jobs/saved', [JobPostingController::class, 'saved'])->name('jobs.saved');
+    Route::get('jobs/add', [JobPostingController::class, 'create'])->name('jobs.create');
+    Route::get('jobs/documents', [JobPostingController::class, 'documents'])->name('jobs.documents');
     Route::put('jobs/preferences', [JobSearchController::class, 'update'])->name('jobs.preferences.update');
     Route::post('jobs/search', [JobSearchController::class, 'search'])->name('jobs.search');
     Route::post('jobs/{jobPosting}/save', [JobSearchController::class, 'save'])->name('jobs.save');

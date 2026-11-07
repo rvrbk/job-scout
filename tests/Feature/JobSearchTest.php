@@ -473,7 +473,9 @@ class JobSearchTest extends TestCase
 
         $this->actingAs($user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
             ->has('postings', 1)
-            ->where('postings.0.title', 'Strong')
+            ->where('postings.0.title', 'Strong'));
+
+        $this->get(route('jobs.saved'))->assertInertia(fn (AssertableInertia $page) => $page
             ->has('saved.data', 1)
             ->where('saved.data.0.title', 'Pasted'));
     }
@@ -485,7 +487,7 @@ class JobSearchTest extends TestCase
         JobPosting::factory()->for($user)->create();
         GeneratedDocument::factory()->for($user)->for($posting)->create(['type' => DocumentType::Cv]);
 
-        $this->actingAs($user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
+        $this->actingAs($user)->get(route('jobs.saved'))->assertInertia(fn (AssertableInertia $page) => $page
             ->where('saved.data', fn ($saved) => $saved->contains(fn ($p) => $p['id'] === $posting->id
                 && $p['documents'] === [['type' => 'cv', 'type_label' => 'CV', 'status' => $p['documents'][0]['status']]])
                 && $saved->where('documents', [])->count() === 1));
@@ -516,7 +518,7 @@ class JobSearchTest extends TestCase
         $this->actingAs($posting->user)->post(route('jobs.save', $posting))->assertRedirect();
 
         $this->assertNotNull($posting->refresh()->saved_at);
-        $this->actingAs($posting->user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
+        $this->actingAs($posting->user)->get(route('jobs.saved'))->assertInertia(fn (AssertableInertia $page) => $page
             ->where('saved.data', fn ($saved) => $saved->contains(fn ($p) => $p['id'] === $posting->id && $p['saved'] && ! $p['found'])));
 
         $this->actingAs($posting->user)->post(route('jobs.save', $posting));

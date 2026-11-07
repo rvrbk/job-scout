@@ -187,6 +187,6 @@ class GeneratedDocumentController extends Controller
         $jobPosting = $generatedDocument->jobPosting;
         $generatedDocument->delete();
 
-        return $jobPosting === null ? to_route('jobs.index') : to_route('jobs.show', $jobPosting);
+        return $jobPosting === null ? to_route('jobs.documents') : to_route('jobs.show', $jobPosting);
     }
 }

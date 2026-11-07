@@ -9,7 +9,7 @@ import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { index as jobsIndex, show as showJob } from '@/routes/jobs';
+import { documents as jobsDocuments, index as jobsIndex, show as showJob } from '@/routes/jobs';
 import type { DocumentClaim, GeneratedDocument } from '@/types';
 
 const props = defineProps<{
@@ -84,7 +84,7 @@ const locked = computed(() => props.document.is_processing);
                         :href="
                             document.job
                                 ? showJob(document.job.id)
-                                : jobsIndex()
+                                : jobsDocuments()
                         "
                         class="text-sm text-muted-foreground underline"
                         >{{

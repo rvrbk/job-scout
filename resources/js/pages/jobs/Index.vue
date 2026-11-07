@@ -1,42 +1,20 @@
 <script setup lang="ts">
-import { Form, Head, Link, router } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import { Bookmark, ExternalLink, Search, X } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref } from 'vue';
-import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
+import { computed } from 'vue';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
-import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
-import DraftDocumentForm from '@/components/documents/DraftDocumentForm.vue';
 import Heading from '@/components/Heading.vue';
-import AddJobForm from '@/components/jobs/AddJobForm.vue';
 import DocumentBadges from '@/components/jobs/DocumentBadges.vue';
 import JobSearchPreferencesForm from '@/components/jobs/JobSearchPreferencesForm.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { show as showDocument } from '@/routes/documents';
 import { index, show } from '@/routes/jobs';
-import type {
-    DocumentSummary,
-    JobPostingSummary,
-    JobSearchPreferences,
-    Option,
-    Paginated,
-    StyleOption,
-    ToneOption,
-} from '@/types';
+import type { JobPostingSummary, JobSearchPreferences } from '@/types';
 
 const props = defineProps<{
     postings: JobPostingSummary[];
-    saved: Paginated<JobPostingSummary>;
-    filters: { q: string; sort: 'newest' | 'oldest' };
     preferences: JobSearchPreferences;
-    generalDocuments: DocumentSummary[];
-    documentTypes: Option[];
-    documentStyles: StyleOption[];
-    documentTones: ToneOption[];
-    preferredStyle: string | null;
-    preferredTone: string | null;
 }>();
 
 const lastSearchedAt = computed(() =>
@@ -46,33 +24,6 @@ const lastSearchedAt = computed(() =>
 );
 
 const found = computed(() => props.postings.filter((posting) => posting.found));
-
-const search = ref(props.filters.q);
-const sort = ref(props.filters.sort);
-let timer: ReturnType<typeof setTimeout> | undefined;
-
-// Search and sort run on the server so they cover every page, not just this one.
-const reloadSaved = () =>
-    router.get(
-        index.url(),
-        {
-            q: search.value || undefined,
-            sort: sort.value === 'newest' ? undefined : sort.value,
-        },
-        {
-            only: ['saved', 'filters'],
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        },
-    );
-
-const onSearch = () => {
-    clearTimeout(timer);
-    timer = setTimeout(reloadSaved, 300);
-};
-
-onBeforeUnmount(() => clearTimeout(timer));
 
 defineOptions({
     layout: {
@@ -84,7 +35,7 @@ defineOptions({
 <template>
     <Head title="Jobs" />
 
-    <div class="flex flex-1 flex-col gap-8 p-4">
+    <div class="flex flex-col gap-8">
         <section class="space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <Heading
@@ -227,159 +178,5 @@ defineOptions({
                 <JobSearchPreferencesForm :preferences="preferences" />
             </details>
         </section>
-
-        <section class="space-y-4">
-            <div class="flex flex-wrap items-end justify-between gap-3">
-                <Heading title="Saved jobs" />
-                <div class="flex flex-wrap items-center gap-2">
-                    <Input
-                        v-model="search"
-                        type="search"
-                        placeholder="Search title, company or location"
-                        aria-label="Search saved jobs"
-                        class="w-64"
-                        @input="onSearch"
-                    />
-                    <select
-                        v-model="sort"
-                        aria-label="Sort saved jobs"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
-                        @change="reloadSaved"
-                    >
-                        <option value="newest">Newest first</option>
-                        <option value="oldest">Oldest first</option>
-                    </select>
-                </div>
-            </div>
-            <p
-                v-if="saved.data.length === 0"
-                class="text-sm text-muted-foreground"
-            >
-                {{
-                    filters.q
-                        ? `No saved jobs match "${filters.q}".`
-                        : 'No saved jobs yet. Use the bookmark on a match to keep it here.'
-                }}
-            </p>
-            <ul v-if="saved.data.length" class="divide-y rounded-xl border">
-                <li
-                    v-for="posting in saved.data"
-                    :key="posting.id"
-                    class="flex items-center"
-                >
-                    <Link
-                        :href="show(posting.id)"
-                        class="flex min-w-0 flex-1 items-center justify-between gap-4 p-4 hover:bg-muted/50"
-                    >
-                        <div>
-                            <p class="font-medium">{{ posting.title }}</p>
-                            <p class="text-sm text-muted-foreground">
-                                {{ posting.company ?? 'Unknown company' }} ·
-                                added {{ posting.created_at }}
-                            </p>
-                        </div>
-                        <DocumentBadges
-                            v-if="posting.documents.length"
-                            :documents="posting.documents"
-                        />
-                        <span v-else class="text-sm text-muted-foreground"
-                            >No drafts</span
-                        >
-                    </Link>
-                    <Link
-                        v-if="posting.saved"
-                        :href="JobSearchController.save(posting.id)"
-                        as="button"
-                        preserve-scroll
-                        class="p-2 pr-4 text-primary hover:text-muted-foreground"
-                        title="Remove from saved"
-                        ><Bookmark class="size-4 fill-current"
-                    /></Link>
-                </li>
-            </ul>
-            <nav
-                v-if="saved.last_page > 1"
-                class="flex items-center justify-between text-sm"
-                aria-label="Saved jobs pages"
-            >
-                <p class="text-muted-foreground">
-                    {{ saved.from }}–{{ saved.to }} of {{ saved.total }}
-                </p>
-                <div class="flex gap-2">
-                    <Button
-                        v-if="saved.prev_page_url"
-                        as-child
-                        variant="outline"
-                        size="sm"
-                    >
-                        <Link
-                            :href="saved.prev_page_url"
-                            preserve-scroll
-                            :only="['saved', 'filters']"
-                            >Previous</Link
-                        >
-                    </Button>
-                    <Button
-                        v-if="saved.next_page_url"
-                        as-child
-                        variant="outline"
-                        size="sm"
-                    >
-                        <Link
-                            :href="saved.next_page_url"
-                            preserve-scroll
-                            :only="['saved', 'filters']"
-                            >Next</Link
-                        >
-                    </Button>
-                </div>
-            </nav>
-        </section>
-
-        <div class="grid gap-8 lg:grid-cols-2">
-            <section class="space-y-4">
-                <Heading
-                    title="Add a job"
-                    description="Paste a vacancy or link to it. Then draft a CV or cover letter for it."
-                />
-                <AddJobForm />
-            </section>
-
-            <section class="space-y-4">
-                <Heading
-                    title="Without a job"
-                    description="A general CV or cover letter written from your ledger alone, to adapt later."
-                />
-                <DraftDocumentForm
-                    :action="GeneratedDocumentController.storeGeneral.form()"
-                    :document-types="documentTypes"
-                    :document-styles="documentStyles"
-                    :document-tones="documentTones"
-                    :preferred-style="preferredStyle"
-                    :preferred-tone="preferredTone"
-                />
-                <ul
-                    v-if="generalDocuments.length"
-                    class="divide-y rounded-xl border"
-                >
-                    <li v-for="document in generalDocuments" :key="document.id">
-                        <Link
-                            :href="showDocument(document.id)"
-                            class="flex items-center justify-between gap-4 p-3 hover:bg-muted/50"
-                        >
-                            <div>
-                                <p class="font-medium">
-                                    General {{ document.type_label }}
-                                </p>
-                                <p class="text-xs text-muted-foreground">
-                                    {{ document.created_at }}
-                                </p>
-                            </div>
-                            <DocumentStatusBadge :status="document.status" />
-                        </Link>
-                    </li>
-                </ul>
-            </section>
-        </div>
     </div>
 </template>

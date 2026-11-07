@@ -146,7 +146,7 @@ class PostingImportAndGeneralDocumentTest extends TestCase
         $this->get(route('documents.export', $document))->assertOk()->assertHeader('Content-Disposition', 'attachment; filename="cv-general.md"');
         $this->get(route('documents.export-pdf', $document))->assertOk();
 
-        $this->delete(route('documents.destroy', $document))->assertRedirect(route('jobs.index'));
+        $this->delete(route('documents.destroy', $document))->assertRedirect(route('jobs.documents'));
     }
 
     public function test_a_general_document_needs_confirmed_facts_and_belongs_to_its_owner()
@@ -160,12 +160,12 @@ class PostingImportAndGeneralDocumentTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('documents.show', $document))->assertForbidden();
     }
 
-    public function test_general_documents_are_listed_on_the_jobs_page()
+    public function test_general_documents_are_listed_on_their_own_jobs_page()
     {
         $user = User::factory()->create();
         GeneratedDocument::factory()->for($user)->general()->create();
 
-        $this->actingAs($user)->get(route('jobs.index'))
+        $this->actingAs($user)->get(route('jobs.documents'))
             ->assertInertia(fn ($page) => $page->has('generalDocuments', 1)->has('documentTypes')->has('documentStyles'));
     }
 }

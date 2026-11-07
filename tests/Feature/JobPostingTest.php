@@ -68,13 +68,13 @@ class JobPostingTest extends TestCase
             JobPosting::factory()->for($user)->create(['title' => "Job {$day}", 'created_at' => now()->subDays(20 - $day)]);
         }
 
-        $this->actingAs($user)->get(route('jobs.index'))
+        $this->actingAs($user)->get(route('jobs.saved'))
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->has('saved.data', 10)
                 ->where('saved.total', 12)
                 ->where('saved.data.0.title', 'Job 12'));
 
-        $this->get(route('jobs.index', ['saved_page' => 2]))
+        $this->get(route('jobs.saved', ['saved_page' => 2]))
             ->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 2)->where('saved.data.1.title', 'Job 1'));
     }
 
@@ -84,10 +84,10 @@ class JobPostingTest extends TestCase
         JobPosting::factory()->for($user)->create(['title' => 'Old', 'created_at' => now()->subDays(5)]);
         JobPosting::factory()->for($user)->create(['title' => 'New', 'created_at' => now()]);
 
-        $this->actingAs($user)->get(route('jobs.index', ['sort' => 'oldest']))
+        $this->actingAs($user)->get(route('jobs.saved', ['sort' => 'oldest']))
             ->assertInertia(fn (AssertableInertia $page) => $page->where('saved.data.0.title', 'Old')->where('filters.sort', 'oldest'));
 
-        $this->get(route('jobs.index', ['sort' => 'sideways']))->assertSessionHasErrors('sort');
+        $this->get(route('jobs.saved', ['sort' => 'sideways']))->assertSessionHasErrors('sort');
     }
 
     public function test_saved_jobs_can_be_searched_by_title_company_or_location_across_pages()
@@ -97,7 +97,7 @@ class JobPostingTest extends TestCase
         JobPosting::factory()->for($user)->create(['title' => 'Laravel Developer', 'company' => 'Acme', 'location' => 'Utrecht']);
         JobPosting::factory()->create(['title' => 'Laravel Someone Else']);
 
-        $search = fn (string $q) => $this->actingAs($user)->get(route('jobs.index', ['q' => $q]));
+        $search = fn (string $q) => $this->actingAs($user)->get(route('jobs.saved', ['q' => $q]));
 
         $search('laravel')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1)->where('saved.data.0.company', 'Acme'));
         $search('ACME')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1));
@@ -112,11 +112,28 @@ class JobPostingTest extends TestCase
         $match = JobPosting::factory()->for($user)->create(['source' => 'remotive', 'external_id' => '1', 'match_score' => 90]);
 
         $this->actingAs($user)->get(route('jobs.index'))
-            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 1)->has('saved.data', 0));
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 1));
+        $this->get(route('jobs.saved'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 0));
 
         $match->update(['saved_at' => now()]);
 
         $this->get(route('jobs.index'))
-            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 0)->has('saved.data', 1));
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 0));
+        $this->get(route('jobs.saved'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1));
+    }
+
+    public function test_each_jobs_section_is_its_own_page()
+    {
+        $user = User::factory()->create();
+
+        $this->get(route('jobs.saved'))->assertRedirect(route('login'));
+
+        $this->actingAs($user);
+        $this->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page->component('jobs/Index')->has('postings')->has('preferences'));
+        $this->get(route('jobs.saved'))->assertInertia(fn (AssertableInertia $page) => $page->component('jobs/Saved')->has('saved')->has('filters'));
+        $this->get(route('jobs.create'))->assertInertia(fn (AssertableInertia $page) => $page->component('jobs/Add'));
+        $this->get(route('jobs.documents'))->assertInertia(fn (AssertableInertia $page) => $page->component('jobs/Documents')->has('generalDocuments')->has('documentTypes'));
     }
 }
