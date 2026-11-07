@@ -24,13 +24,45 @@ class JobPostingController extends Controller
     {
         $preferences = $request->user()->jobSearchPreference;
 
-        $postings = $request->user()->jobPostings()
-            ->visible($preferences->min_score ?? 60)
+        $minScore = $preferences->min_score ?? 60;
+
+        // Matches the search found and scored well; they stay one list, best score first.
+        $found = $request->user()->jobPostings()
+            ->visible($minScore)
+            ->whereNotNull('source')
+            ->whereNull('saved_at')
             ->withCount('documents')
             ->with('documents:id,job_posting_id,type,status', 'searchRun:id,trigger,started_at')
             ->orderByDesc('match_score')
             ->latest()
             ->get();
+
+        // Saved and hand-added jobs: searchable, sorted by date added, paged.
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', 'in:newest,oldest'],
+        ]);
+        $term = trim($filters['q'] ?? '');
+        $sort = $filters['sort'] ?? 'newest';
+
+        $saved = $request->user()->jobPostings()
+            ->visible($minScore)
+            ->where(fn ($query) => $query->whereNull('source')->orWhereNotNull('saved_at'))
+            ->when($term !== '', function ($query) use ($term) {
+                $like = '%'.addcslashes($term, '%_\\').'%';
+
+                $query->where(fn ($query) => $query
+                    ->whereLike('title', $like)
+                    ->orWhereLike('company', $like)
+                    ->orWhereLike('location', $like));
+            })
+            ->withCount('documents')
+            ->with('documents:id,job_posting_id,type,status', 'searchRun:id,trigger,started_at')
+            ->orderBy('created_at', $sort === 'oldest' ? 'asc' : 'desc')
+            ->orderBy('id', $sort === 'oldest' ? 'asc' : 'desc')
+            ->paginate(10, pageName: 'saved_page')
+            ->withQueryString()
+            ->through(fn (JobPosting $posting) => $this->summary($posting));
 
         return Inertia::render('jobs/Index', [
             'generalDocuments' => $request->user()->generatedDocuments()->whereNull('job_posting_id')->latest()->get()->map(fn (GeneratedDocument $document) => [
@@ -41,33 +73,9 @@ class JobPostingController extends Controller
                 'created_at' => $document->created_at?->toDateTimeString(),
             ]),
             ...$this->documentOptions($request),
-            'postings' => $postings->map(fn (JobPosting $posting) => [
-                'id' => $posting->id,
-                'title' => $posting->title,
-                'company' => $posting->company,
-                'location' => $posting->location,
-                'remote' => $posting->remote,
-                'source_url' => $posting->source_url,
-                'saved' => $posting->saved_at !== null,
-                'found' => $posting->source !== null && $posting->saved_at === null,
-                'is_new' => $posting->seen_at === null,
-                'source' => $posting->source,
-                'found_by' => $posting->searchRun === null ? null : [
-                    'trigger' => $posting->searchRun->trigger,
-                    'at' => $posting->searchRun->started_at->toIso8601String(),
-                ],
-                'match_score' => $posting->match_score,
-                'match_reason' => $posting->match_reason,
-                'documents_count' => $posting->documents_count,
-                'documents' => $posting->documents
-                    ->map(fn (GeneratedDocument $document) => [
-                        'type' => $document->type->value,
-                        'type_label' => $document->type->label(),
-                        'status' => $document->status->value,
-                    ])
-                    ->values(),
-                'created_at' => $posting->created_at?->toDateString(),
-            ]),
+            'postings' => $found->map(fn (JobPosting $posting) => $this->summary($posting)),
+            'saved' => $saved,
+            'filters' => ['q' => $term, 'sort' => $sort],
             'preferences' => [
                 'locations' => $preferences?->places() ?? [],
                 'remote_preference' => $preferences?->elsewhere() ?? JobSearchPreference::REMOTE_ONLY,
@@ -169,6 +177,40 @@ class JobPostingController extends Controller
                 'value' => $type->value,
                 'label' => $type->label(),
             ]),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function summary(JobPosting $posting): array
+    {
+        return [
+            'id' => $posting->id,
+            'title' => $posting->title,
+            'company' => $posting->company,
+            'location' => $posting->location,
+            'remote' => $posting->remote,
+            'source_url' => $posting->source_url,
+            'saved' => $posting->saved_at !== null,
+            'found' => $posting->source !== null && $posting->saved_at === null,
+            'is_new' => $posting->seen_at === null,
+            'source' => $posting->source,
+            'found_by' => $posting->searchRun === null ? null : [
+                'trigger' => $posting->searchRun->trigger,
+                'at' => $posting->searchRun->started_at->toIso8601String(),
+            ],
+            'match_score' => $posting->match_score,
+            'match_reason' => $posting->match_reason,
+            'documents_count' => $posting->documents_count,
+            'documents' => $posting->documents
+                ->map(fn (GeneratedDocument $document) => [
+                    'type' => $document->type->value,
+                    'type_label' => $document->type->label(),
+                    'status' => $document->status->value,
+                ])
+                ->values(),
+            'created_at' => $posting->created_at?->toDateString(),
         ];
     }
 }

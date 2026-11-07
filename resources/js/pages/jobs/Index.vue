@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { Bookmark, ExternalLink, Search, X } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
 import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
@@ -12,6 +12,7 @@ import DocumentBadges from '@/components/jobs/DocumentBadges.vue';
 import JobSearchPreferencesForm from '@/components/jobs/JobSearchPreferencesForm.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { show as showDocument } from '@/routes/documents';
 import { index, show } from '@/routes/jobs';
@@ -20,12 +21,15 @@ import type {
     JobPostingSummary,
     JobSearchPreferences,
     Option,
+    Paginated,
     StyleOption,
     ToneOption,
 } from '@/types';
 
 const props = defineProps<{
     postings: JobPostingSummary[];
+    saved: Paginated<JobPostingSummary>;
+    filters: { q: string; sort: 'newest' | 'oldest' };
     preferences: JobSearchPreferences;
     generalDocuments: DocumentSummary[];
     documentTypes: Option[];
@@ -42,9 +46,33 @@ const lastSearchedAt = computed(() =>
 );
 
 const found = computed(() => props.postings.filter((posting) => posting.found));
-const saved = computed(() =>
-    props.postings.filter((posting) => !posting.found),
-);
+
+const search = ref(props.filters.q);
+const sort = ref(props.filters.sort);
+let timer: ReturnType<typeof setTimeout> | undefined;
+
+// Search and sort run on the server so they cover every page, not just this one.
+const reloadSaved = () =>
+    router.get(
+        index.url(),
+        {
+            q: search.value || undefined,
+            sort: sort.value === 'newest' ? undefined : sort.value,
+        },
+        {
+            only: ['saved', 'filters'],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        },
+    );
+
+const onSearch = () => {
+    clearTimeout(timer);
+    timer = setTimeout(reloadSaved, 300);
+};
+
+onBeforeUnmount(() => clearTimeout(timer));
 
 defineOptions({
     layout: {
@@ -201,13 +229,41 @@ defineOptions({
         </section>
 
         <section class="space-y-4">
-            <Heading title="Saved jobs" />
-            <p v-if="saved.length === 0" class="text-sm text-muted-foreground">
-                No saved jobs yet. Use the bookmark on a match to keep it here.
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <Heading title="Saved jobs" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <Input
+                        v-model="search"
+                        type="search"
+                        placeholder="Search title, company or location"
+                        aria-label="Search saved jobs"
+                        class="w-64"
+                        @input="onSearch"
+                    />
+                    <select
+                        v-model="sort"
+                        aria-label="Sort saved jobs"
+                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
+                        @change="reloadSaved"
+                    >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
+            </div>
+            <p
+                v-if="saved.data.length === 0"
+                class="text-sm text-muted-foreground"
+            >
+                {{
+                    filters.q
+                        ? `No saved jobs match "${filters.q}".`
+                        : 'No saved jobs yet. Use the bookmark on a match to keep it here.'
+                }}
             </p>
-            <ul class="divide-y rounded-xl border">
+            <ul v-if="saved.data.length" class="divide-y rounded-xl border">
                 <li
-                    v-for="posting in saved"
+                    v-for="posting in saved.data"
                     :key="posting.id"
                     class="flex items-center"
                 >
@@ -241,6 +297,43 @@ defineOptions({
                     /></Link>
                 </li>
             </ul>
+            <nav
+                v-if="saved.last_page > 1"
+                class="flex items-center justify-between text-sm"
+                aria-label="Saved jobs pages"
+            >
+                <p class="text-muted-foreground">
+                    {{ saved.from }}–{{ saved.to }} of {{ saved.total }}
+                </p>
+                <div class="flex gap-2">
+                    <Button
+                        v-if="saved.prev_page_url"
+                        as-child
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Link
+                            :href="saved.prev_page_url"
+                            preserve-scroll
+                            :only="['saved', 'filters']"
+                            >Previous</Link
+                        >
+                    </Button>
+                    <Button
+                        v-if="saved.next_page_url"
+                        as-child
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Link
+                            :href="saved.next_page_url"
+                            preserve-scroll
+                            :only="['saved', 'filters']"
+                            >Next</Link
+                        >
+                    </Button>
+                </div>
+            </nav>
         </section>
 
         <div class="grid gap-8 lg:grid-cols-2">

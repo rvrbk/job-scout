@@ -50,15 +50,15 @@ export type JobPostingSummary = {
     saved: boolean;
     is_new: boolean;
     source: string | null;
-    found_by: { trigger: "scheduled" | "manual"; at: string } | null;
+    found_by: { trigger: 'scheduled' | 'manual'; at: string } | null;
     match_score: number | null;
     match_reason: string | null;
     documents_count: number;
-    documents: Pick<DocumentSummary, "type" | "type_label" | "status">[];
+    documents: Pick<DocumentSummary, 'type' | 'type_label' | 'status'>[];
     created_at: string | null;
 };
 
-export type WorkMode = "any" | "hybrid" | "remote_only";
+export type WorkMode = 'any' | 'hybrid' | 'remote_only';
 
 export type JobSearchPreferences = {
     locations: { place: string; mode: WorkMode }[];
@@ -86,12 +86,12 @@ export type JobPosting = {
 };
 
 export type DocumentStatus =
-    | "generating"
-    | "verifying"
-    | "needs_review"
-    | "verified"
-    | "approved"
-    | "failed";
+    | 'generating'
+    | 'verifying'
+    | 'needs_review'
+    | 'verified'
+    | 'approved'
+    | 'failed';
 
 export type DocumentSummary = {
     id: number;
@@ -103,11 +103,11 @@ export type DocumentSummary = {
 
 export type DocumentClaim = {
     id: number;
-    section: "summary" | "experience" | "skills" | "letter";
+    section: 'summary' | 'experience' | 'skills' | 'letter';
     group: number;
-    kind: "claim" | "framing" | "skill";
+    kind: 'claim' | 'framing' | 'skill';
     text: string;
-    status: "pending" | "supported" | "unsupported";
+    status: 'pending' | 'supported' | 'unsupported';
     verifier_note: string | null;
     entry_heading: string | null;
     facts: { id: number; statement: string }[];
@@ -115,7 +115,7 @@ export type DocumentClaim = {
 
 export type GeneratedDocument = {
     id: number;
-    type: "cv" | "cover_letter";
+    type: 'cv' | 'cover_letter';
     type_label: string;
     status: DocumentStatus;
     is_processing: boolean;
@@ -126,4 +126,15 @@ export type GeneratedDocument = {
     job: { id: number; title: string; company: string | null } | null;
     claims: DocumentClaim[];
     markdown: string | null;
+};
+
+export type Paginated<T> = {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 };

@@ -358,20 +358,20 @@ class JobSearchTest extends TestCase
     {
         Http::fake([
             'boards-api.greenhouse.io/*' => Http::response(['jobs' => [
-                ['id' => 7, 'title' => 'Laravel Engineer', 'company_name' => 'Stripe', 'location' => ['name' => 'Remote'], 'absolute_url' => 'https://example.com/gh-7', 'content' => '&lt;p&gt;Build things&lt;/p&gt;', 'first_published' => '2026-10-01T10:00:00-04:00'],
+                ['id' => 7, 'title' => 'Laravel Engineer', 'company_name' => 'Stripe', 'location' => ['name' => 'Remote'], 'absolute_url' => 'https://example.com/gh-7', 'content' => '&lt;p&gt;Build things&lt;/p&gt;', 'first_published' => now()->subDays(3)->toIso8601String()],
             ]]),
             'api.lever.co/*' => Http::response([
                 ['id' => 'abc', 'text' => 'Vue Engineer', 'hostedUrl' => 'https://example.com/lv-1', 'categories' => ['location' => 'Berlin'], 'workplaceType' => 'remote', 'descriptionPlain' => 'Frontend', 'createdAt' => now()->getTimestampMs()],
             ]),
             'jobicy.com/*' => Http::response(['jobs' => [
-                ['id' => 1, 'jobTitle' => 'PHP Developer', 'companyName' => 'Jobi', 'jobGeo' => 'Europe', 'url' => 'https://example.com/jc-1', 'jobDescription' => '<p>PHP</p>', 'pubDate' => '2026-10-30T03:30:29+00:00'],
+                ['id' => 1, 'jobTitle' => 'PHP Developer', 'companyName' => 'Jobi', 'jobGeo' => 'Europe', 'url' => 'https://example.com/jc-1', 'jobDescription' => '<p>PHP</p>', 'pubDate' => now()->subDays(2)->toIso8601String()],
             ]]),
-            'remoteok.com/*' => Http::response([['legal' => 'notice'], ['id' => '9', 'position' => 'Laravel Dev', 'company' => 'ROK', 'location' => '', 'url' => 'https://example.com/rok-9', 'description' => 'x', 'date' => '2026-10-28T21:53:15+00:00']]),
+            'remoteok.com/*' => Http::response([['legal' => 'notice'], ['id' => '9', 'position' => 'Laravel Dev', 'company' => 'ROK', 'location' => '', 'url' => 'https://example.com/rok-9', 'description' => 'x', 'date' => now()->subDays(4)->toIso8601String()]]),
             'himalayas.app/*' => Http::response(['jobs' => [
-                ['title' => 'Laravel Lead', 'companyName' => 'Him', 'guid' => 'h-1', 'applicationLink' => 'https://example.com/h-1', 'locationRestrictions' => ['Netherlands'], 'description' => 'x', 'pubDate' => 1793346517],
+                ['title' => 'Laravel Lead', 'companyName' => 'Him', 'guid' => 'h-1', 'applicationLink' => 'https://example.com/h-1', 'locationRestrictions' => ['Netherlands'], 'description' => 'x', 'pubDate' => now()->subDay()->timestamp],
             ]]),
             'themuse.com/*' => Http::response(['results' => [
-                ['id' => 5, 'name' => 'Laravel Dev', 'company' => ['name' => 'Muse Co'], 'locations' => [['name' => 'Flexible / Remote']], 'refs' => ['landing_page' => 'https://example.com/m-5'], 'contents' => '<p>x</p>', 'publication_date' => '2026-10-03T18:56:56Z'],
+                ['id' => 5, 'name' => 'Laravel Dev', 'company' => ['name' => 'Muse Co'], 'locations' => [['name' => 'Flexible / Remote']], 'refs' => ['landing_page' => 'https://example.com/m-5'], 'contents' => '<p>x</p>', 'publication_date' => now()->subDays(5)->toIso8601String()],
             ]]),
             'weworkremotely.com/*' => Http::response('<rss><channel></channel></rss>'),
             '*' => Http::response([]),
@@ -426,9 +426,10 @@ class JobSearchTest extends TestCase
         JobPosting::factory()->for($user)->create(['title' => 'Pasted']);
 
         $this->actingAs($user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('postings', 2)
+            ->has('postings', 1)
             ->where('postings.0.title', 'Strong')
-            ->where('postings.1.title', 'Pasted'));
+            ->has('saved.data', 1)
+            ->where('saved.data.0.title', 'Pasted'));
     }
 
     public function test_the_overview_shows_which_documents_exist_for_each_job()
@@ -439,9 +440,9 @@ class JobSearchTest extends TestCase
         GeneratedDocument::factory()->for($user)->for($posting)->create(['type' => DocumentType::Cv]);
 
         $this->actingAs($user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('postings', fn ($postings) => $postings->contains(fn ($p) => $p['id'] === $posting->id
+            ->where('saved.data', fn ($saved) => $saved->contains(fn ($p) => $p['id'] === $posting->id
                 && $p['documents'] === [['type' => 'cv', 'type_label' => 'CV', 'status' => $p['documents'][0]['status']]])
-                && $postings->where('documents', [])->count() === 1));
+                && $saved->where('documents', [])->count() === 1));
     }
 
     public function test_a_posting_can_be_dismissed_only_by_its_owner()
@@ -470,7 +471,7 @@ class JobSearchTest extends TestCase
 
         $this->assertNotNull($posting->refresh()->saved_at);
         $this->actingAs($posting->user)->get(route('jobs.index'))->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('postings', fn ($postings) => $postings->contains(fn ($p) => $p['id'] === $posting->id && $p['saved'] && ! $p['found'])));
+            ->where('saved.data', fn ($saved) => $saved->contains(fn ($p) => $p['id'] === $posting->id && $p['saved'] && ! $p['found'])));
 
         $this->actingAs($posting->user)->post(route('jobs.save', $posting));
 

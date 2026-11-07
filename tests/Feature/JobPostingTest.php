@@ -60,4 +60,63 @@ class JobPostingTest extends TestCase
         $this->actingAs($intruder)->get(route('jobs.show', $posting))->assertForbidden();
         $this->actingAs($intruder)->delete(route('jobs.destroy', $posting))->assertForbidden();
     }
+
+    public function test_saved_jobs_are_paged_ten_at_a_time_newest_first()
+    {
+        $user = User::factory()->create();
+        foreach (range(1, 12) as $day) {
+            JobPosting::factory()->for($user)->create(['title' => "Job {$day}", 'created_at' => now()->subDays(20 - $day)]);
+        }
+
+        $this->actingAs($user)->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('saved.data', 10)
+                ->where('saved.total', 12)
+                ->where('saved.data.0.title', 'Job 12'));
+
+        $this->get(route('jobs.index', ['saved_page' => 2]))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 2)->where('saved.data.1.title', 'Job 1'));
+    }
+
+    public function test_saved_jobs_can_be_sorted_oldest_first()
+    {
+        $user = User::factory()->create();
+        JobPosting::factory()->for($user)->create(['title' => 'Old', 'created_at' => now()->subDays(5)]);
+        JobPosting::factory()->for($user)->create(['title' => 'New', 'created_at' => now()]);
+
+        $this->actingAs($user)->get(route('jobs.index', ['sort' => 'oldest']))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('saved.data.0.title', 'Old')->where('filters.sort', 'oldest'));
+
+        $this->get(route('jobs.index', ['sort' => 'sideways']))->assertSessionHasErrors('sort');
+    }
+
+    public function test_saved_jobs_can_be_searched_by_title_company_or_location_across_pages()
+    {
+        $user = User::factory()->create();
+        JobPosting::factory()->count(11)->for($user)->create(['title' => 'Plumber', 'company' => 'Pipes Inc']);
+        JobPosting::factory()->for($user)->create(['title' => 'Laravel Developer', 'company' => 'Acme', 'location' => 'Utrecht']);
+        JobPosting::factory()->create(['title' => 'Laravel Someone Else']);
+
+        $search = fn (string $q) => $this->actingAs($user)->get(route('jobs.index', ['q' => $q]));
+
+        $search('laravel')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1)->where('saved.data.0.company', 'Acme'));
+        $search('ACME')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1));
+        $search('utrecht')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 1));
+        $search('%')->assertInertia(fn (AssertableInertia $page) => $page->has('saved.data', 0));
+        $search('')->assertInertia(fn (AssertableInertia $page) => $page->where('saved.total', 12));
+    }
+
+    public function test_found_matches_are_not_mixed_into_saved_jobs_until_saved()
+    {
+        $user = User::factory()->create();
+        $match = JobPosting::factory()->for($user)->create(['source' => 'remotive', 'external_id' => '1', 'match_score' => 90]);
+
+        $this->actingAs($user)->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 1)->has('saved.data', 0));
+
+        $match->update(['saved_at' => now()]);
+
+        $this->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('postings', 0)->has('saved.data', 1));
+    }
 }
