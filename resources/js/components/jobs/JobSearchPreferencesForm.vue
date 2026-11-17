@@ -35,6 +35,24 @@ const addLocation = () =>
     locations.value.push({ key: nextKey++, place: "", mode: "hybrid" });
 
 const lines = (items: string[]) => items.join("\n");
+
+const providers = [
+    { value: "greenhouse", label: "Greenhouse" },
+    { value: "lever", label: "Lever" },
+    { value: "ashby", label: "Ashby" },
+    { value: "workable", label: "Workable" },
+];
+
+const boards = ref(
+    props.preferences.boards.map((spec) => {
+        const [provider, ...company] = spec.split(":");
+
+        return { key: nextKey++, provider, company: company.join(":") };
+    }),
+);
+
+const addBoard = () =>
+    boards.value.push({ key: nextKey++, provider: "greenhouse", company: "" });
 </script>
 
 <template>
@@ -169,20 +187,78 @@ const lines = (items: string[]) => items.join("\n");
         </div>
 
         <div class="grid gap-2">
-            <Label for="boards">Company job boards</Label>
-            <Textarea
-                id="boards"
-                name="boards"
-                rows="2"
-                placeholder="greenhouse:stripe&#10;lever:palantir"
-                :default-value="lines(preferences.boards)"
-            />
+            <Label>Company job boards</Label>
+            <div
+                v-for="(row, index) in boards"
+                :key="row.key"
+                class="flex flex-wrap items-center gap-2"
+            >
+                <select
+                    v-model="row.provider"
+                    aria-label="Job board provider"
+                    :class="selectClass"
+                >
+                    <option
+                        v-for="provider in providers"
+                        :key="provider.value"
+                        :value="provider.value"
+                    >
+                        {{ provider.label }}
+                    </option>
+                </select>
+                <Input
+                    v-model="row.company"
+                    aria-label="Company name on the board"
+                    placeholder="Company name as in the board's URL"
+                    class="min-w-48 flex-1 sm:max-w-xs"
+                />
+                <input
+                    v-if="row.company.trim() !== ''"
+                    type="hidden"
+                    :name="`boards[${index}]`"
+                    :value="`${row.provider}:${row.company.trim()}`"
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    title="Remove job board"
+                    @click="boards.splice(index, 1)"
+                >
+                    <X class="size-4" />
+                </Button>
+            </div>
+            <div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    :disabled="boards.length >= 50"
+                    @click="addBoard"
+                >
+                    <Plus /> Add job board
+                </Button>
+            </div>
             <p class="text-xs text-muted-foreground">
-                One per line as provider:company, where provider is greenhouse,
-                lever, ashby or workable and company is the name in the board's
-                URL.
+                Many companies run their careers page on an applicant tracking
+                system. Job Scout can read the public boards of Greenhouse,
+                Lever, Ashby and Workable directly, so every search also checks
+                that company's own openings. To find the right values, open the
+                company's careers page and look at the address of a vacancy or
+                the apply link: the provider is in the domain
+                (boards.greenhouse.io, jobs.lever.co, jobs.ashbyhq.com,
+                apply.workable.com) and the company name is the part right after
+                it. For example, jobs.ashbyhq.com/M-KOPA is Ashby with company
+                M-KOPA. Rows without a company name are ignored.
             </p>
-            <InputError :message="errors.boards" />
+            <InputError
+                :message="
+                    errors.boards ||
+                    Object.entries(errors).find(([key]) =>
+                        key.startsWith('boards.'),
+                    )?.[1]
+                "
+            />
         </div>
 
         <div class="flex flex-wrap items-end gap-6">
