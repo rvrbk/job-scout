@@ -30,11 +30,11 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Documents without a job" />
+    <Head title="Draft general documents" />
 
     <section class="max-w-2xl space-y-4">
         <Heading
-            title="Without a job"
+            title="Draft general documents"
             description="A general CV or cover letter written from your ledger alone, to adapt later."
         />
         <DraftDocumentForm

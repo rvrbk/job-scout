@@ -12,11 +12,11 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Add a job" />
+    <Head title="Import a vacancy" />
 
     <section class="max-w-2xl space-y-4">
         <Heading
-            title="Add a job"
+            title="Import a vacancy"
             description="Paste a vacancy or link to it. Then draft a CV or cover letter for it."
         />
         <AddJobForm />

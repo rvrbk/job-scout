@@ -17,7 +17,12 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as jobsIndex } from '@/routes/jobs';
+import {
+    create as jobsCreate,
+    documents as jobsDocuments,
+    index as jobsIndex,
+    saved as jobsSaved,
+} from '@/routes/jobs';
 import { index as ledgerIndex } from '@/routes/ledger';
 import type { NavItem } from '@/types';
 
@@ -39,6 +44,12 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: jobsIndex(),
         icon: Briefcase,
         badge: page.props.newJobs,
+        children: [
+            { title: 'Best matches', href: jobsIndex() },
+            { title: 'Saved for later', href: jobsSaved() },
+            { title: 'Import a vacancy', href: jobsCreate() },
+            { title: 'Draft general documents', href: jobsDocuments() },
+        ],
     },
 ]);
 

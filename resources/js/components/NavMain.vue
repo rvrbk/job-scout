@@ -7,6 +7,9 @@ import {
     SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
@@ -15,7 +18,14 @@ defineProps<{
     items: NavItem[];
 }>();
 
-const { isCurrentUrl } = useCurrentUrl();
+const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
+
+// A parent lights up on its own pages, but not while one of its sub links is the current page.
+const isActive = (item: NavItem) =>
+    item.children?.length
+        ? isCurrentOrParentUrl(item.href) &&
+          !item.children.some((child) => isCurrentUrl(child.href))
+        : isCurrentUrl(item.href);
 </script>
 
 <template>
@@ -25,7 +35,7 @@ const { isCurrentUrl } = useCurrentUrl();
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton
                     as-child
-                    :is-active="isCurrentUrl(item.href)"
+                    :is-active="isActive(item)"
                     :tooltip="item.title"
                 >
                     <Link :href="item.href">
@@ -39,6 +49,21 @@ const { isCurrentUrl } = useCurrentUrl();
                 >
                     {{ item.badge }}
                 </SidebarMenuBadge>
+                <SidebarMenuSub v-if="item.children?.length">
+                    <SidebarMenuSubItem
+                        v-for="child in item.children"
+                        :key="child.title"
+                    >
+                        <SidebarMenuSubButton
+                            as-child
+                            :is-active="isCurrentUrl(child.href)"
+                        >
+                            <Link :href="child.href">
+                                <span>{{ child.title }}</span>
+                            </Link>
+                        </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                </SidebarMenuSub>
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>

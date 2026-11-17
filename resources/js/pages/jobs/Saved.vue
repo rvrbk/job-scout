@@ -50,13 +50,13 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Saved jobs" />
+    <Head title="Saved for later" />
 
     <div class="flex flex-col gap-8">
         <section class="space-y-4">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <Heading
-                    title="Saved jobs"
+                    title="Saved for later"
                     description="Jobs you bookmarked or added yourself."
                 />
                 <div class="flex flex-wrap items-center gap-2">

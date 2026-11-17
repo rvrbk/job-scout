@@ -39,7 +39,7 @@ defineOptions({
         <section class="space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <Heading
-                    title="Matches"
+                    title="Best matches"
                     :description="
                         lastSearchedAt
                             ? `Jobs scored against your confirmed ledger. Last searched ${lastSearchedAt}.`

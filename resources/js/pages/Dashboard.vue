@@ -5,7 +5,7 @@ import StackedBars from "@/components/dashboard/StackedBars.vue";
 import StatTile from "@/components/dashboard/StatTile.vue";
 import Heading from "@/components/Heading.vue";
 import { dashboard } from "@/routes";
-import { documents as jobDocuments, index as jobsIndex } from "@/routes/jobs";
+import { index as jobsIndex } from "@/routes/jobs";
 import { index as ledgerIndex } from "@/routes/ledger";
 
 type Split = { label: string; matches: number; below: number };
@@ -89,13 +89,11 @@ const reviewNote = computed(() =>
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile
                 label="Usable facts"
-                :href="ledgerIndex()"
                 :value="ledger.usable_facts"
                 :note="`of ${ledger.total_facts} in your ledger`"
             />
             <StatTile
                 label="Skills"
-                :href="ledgerIndex()"
                 :value="ledger.skills"
                 note="confirmed in your ledger"
             />
@@ -111,13 +109,11 @@ const reviewNote = computed(() =>
             />
             <StatTile
                 label="Job matches"
-                :href="jobsIndex()"
                 :value="jobs.matches"
                 :note="best"
             />
             <StatTile
                 label="Approved documents"
-                :href="jobDocuments()"
                 :value="documents.approved"
                 :note="reviewNote"
             />

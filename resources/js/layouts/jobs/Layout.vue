@@ -7,10 +7,10 @@ import { create, documents, index, saved } from '@/routes/jobs';
 import type { NavItem } from '@/types';
 
 const tabs: NavItem[] = [
-    { title: 'Matches', href: index() },
-    { title: 'Saved', href: saved() },
-    { title: 'Add a job', href: create() },
-    { title: 'Without a job', href: documents() },
+    { title: 'Best matches', href: index() },
+    { title: 'Saved for later', href: saved() },
+    { title: 'Import a vacancy', href: create() },
+    { title: 'Draft general documents', href: documents() },
 ];
 
 const { isCurrentUrl } = useCurrentUrl();
