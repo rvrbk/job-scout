@@ -78,6 +78,10 @@ const locked = computed(() => props.document.is_processing);
                     "
                     :description="document.job?.company ?? undefined"
                 />
+                <p class="text-sm text-muted-foreground">
+                    PDF style: {{ document.style_label }} · Tone:
+                    {{ document.tone_label }}
+                </p>
                 <div class="flex items-center gap-2">
                     <DocumentStatusBadge :status="document.status" />
                     <Link

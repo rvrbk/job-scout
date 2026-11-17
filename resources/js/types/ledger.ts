@@ -97,6 +97,8 @@ export type DocumentSummary = {
     id: number;
     type: string;
     type_label: string;
+    style_label: string;
+    tone_label: string;
     status: DocumentStatus;
     created_at: string | null;
 };
@@ -117,6 +119,8 @@ export type GeneratedDocument = {
     id: number;
     type: 'cv' | 'cover_letter';
     type_label: string;
+    style_label: string;
+    tone_label: string;
     status: DocumentStatus;
     is_processing: boolean;
     can_be_approved: boolean;

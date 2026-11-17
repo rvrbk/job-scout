@@ -127,7 +127,8 @@ const confirmDelete = () =>
                                     {{ document.type_label }}
                                 </p>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ document.created_at }}
+                                    {{ document.created_at }} · {{ document.style_label }} style ·
+                                    {{ document.tone_label }} tone
                                 </p>
                             </div>
                             <DocumentStatusBadge :status="document.status" />

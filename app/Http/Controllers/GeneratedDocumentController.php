@@ -88,6 +88,8 @@ class GeneratedDocumentController extends Controller
                 'id' => $generatedDocument->id,
                 'type' => $generatedDocument->type->value,
                 'type_label' => $generatedDocument->type->label(),
+                'style_label' => $generatedDocument->style->label(),
+                'tone_label' => $generatedDocument->tone->label(),
                 'status' => $generatedDocument->status->value,
                 'is_processing' => $generatedDocument->status->isProcessing(),
                 'can_be_approved' => $generatedDocument->canBeApproved(),
