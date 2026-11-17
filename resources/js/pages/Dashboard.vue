@@ -21,6 +21,7 @@ const props = defineProps<{
         min_score: number;
         scored: number;
         matches: number;
+        new: number;
         best: { score: number; title: string; company: string | null } | null;
         by_score: Split[];
         by_day: Split[];
@@ -85,7 +86,7 @@ const reviewNote = computed(() =>
             "
         />
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile
                 label="Usable facts"
                 :value="ledger.usable_facts"
@@ -95,6 +96,15 @@ const reviewNote = computed(() =>
                 label="Skills"
                 :value="ledger.skills"
                 note="confirmed in your ledger"
+            />
+            <StatTile
+                label="New jobs"
+                :value="jobs.new"
+                :note="
+                    jobs.new > 0
+                        ? 'matches you have not opened yet'
+                        : 'nothing new right now'
+                "
             />
             <StatTile label="Job matches" :value="jobs.matches" :note="best" />
             <StatTile

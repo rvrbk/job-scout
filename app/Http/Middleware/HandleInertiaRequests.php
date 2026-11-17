@@ -41,6 +41,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'newJobs' => fn () => $request->user()
+                ? $request->user()->jobPostings()->newMatches($request->user()->jobSearchPreference?->min_score ?? 60)->count()
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

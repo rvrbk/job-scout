@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { BookCheck, Briefcase, LayoutGrid } from '@lucide/vue';
-import { onUnmounted } from 'vue';
+import { computed, onUnmounted } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -21,7 +21,9 @@ import { index as jobsIndex } from '@/routes/jobs';
 import { index as ledgerIndex } from '@/routes/ledger';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+
+const mainNavItems = computed<NavItem[]>(() => [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -36,8 +38,9 @@ const mainNavItems: NavItem[] = [
         title: 'Jobs',
         href: jobsIndex(),
         icon: Briefcase,
+        badge: page.props.newJobs,
     },
-];
+]);
 
 const footerNavItems: NavItem[] = [];
 

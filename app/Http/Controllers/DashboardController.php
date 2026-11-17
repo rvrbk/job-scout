@@ -98,6 +98,7 @@ class DashboardController extends Controller
             'min_score' => $minScore,
             'scored' => $found->count(),
             'matches' => $matches->count(),
+            'new' => $user->jobPostings()->newMatches($minScore)->count(),
             'best' => $best ? ['score' => $best->match_score, 'title' => $best->title, 'company' => $best->company] : null,
             'by_score' => $buckets->values()->all(),
             'by_day' => $days->values()->all(),

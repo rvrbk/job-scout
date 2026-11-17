@@ -49,6 +49,16 @@ class JobPosting extends Model
     }
 
     /**
+     * Matches on the Matches page that have not been opened yet.
+     *
+     * @param  Builder<JobPosting>  $query
+     */
+    public function scopeNewMatches(Builder $query, int $minScore): void
+    {
+        $query->visible($minScore)->whereNotNull('source')->whereNull('saved_at')->whereNull('seen_at');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

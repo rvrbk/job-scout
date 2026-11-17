@@ -52,10 +52,27 @@ class DashboardTest extends TestCase
             ->where('ledger.by_type.0.label', 'Work experience')
             ->where('jobs.scored', 4)
             ->where('jobs.matches', 2)
+            ->where('jobs.new', 2)
+            ->where('newJobs', 2)
             ->where('jobs.best.title', 'Great')
             ->where('jobs.by_score.7.matches', 1)
             ->where('jobs.by_score.3.below', 1)
             ->has('jobs.by_day', 14)
             ->where('jobs.by_day.13.matches', 3));
+    }
+
+    public function test_new_jobs_only_count_unopened_matches()
+    {
+        $user = User::factory()->create();
+        $user->jobSearchPreference()->create(['min_score' => 60]);
+
+        JobPosting::factory()->for($user)->create(['source' => 'x', 'external_id' => 'a', 'match_score' => 80]);
+        JobPosting::factory()->for($user)->create(['source' => 'x', 'external_id' => 'b', 'match_score' => 80, 'seen_at' => now()]);
+        JobPosting::factory()->for($user)->create(['source' => 'x', 'external_id' => 'c', 'match_score' => 20]);
+        JobPosting::factory()->for($user)->create(['source' => 'x', 'external_id' => 'd', 'match_score' => 90, 'saved_at' => now()]);
+
+        $this->actingAs($user)->get(route('dashboard'))->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('jobs.new', 1)
+            ->where('newJobs', 1));
     }
 }
