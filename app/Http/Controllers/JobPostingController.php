@@ -6,6 +6,7 @@ use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
 use App\Enums\DocumentType;
 use App\Http\Requests\JobPostingRequest;
+use App\Jobs\RunJobSearch;
 use App\Models\GeneratedDocument;
 use App\Models\JobPosting;
 use App\Models\JobSearchPreference;
@@ -36,6 +37,7 @@ class JobPostingController extends Controller
             ->get();
 
         return Inertia::render('jobs/Index', [
+            'searching' => RunJobSearch::isRunning($request->user()),
             'postings' => $found->map(fn (JobPosting $posting) => $this->summary($posting)),
             'preferences' => [
                 'locations' => $preferences?->places() ?? [],

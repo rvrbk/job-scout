@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
 import { Bookmark, ExternalLink, Search, X } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
 import Heading from '@/components/Heading.vue';
 import DocumentBadges from '@/components/jobs/DocumentBadges.vue';
@@ -15,7 +15,21 @@ import type { JobPostingSummary, JobSearchPreferences } from '@/types';
 const props = defineProps<{
     postings: JobPostingSummary[];
     preferences: JobSearchPreferences;
+    searching: boolean;
 }>();
+
+// A search runs in the background after the click, so keep checking until it is done.
+const { start, stop } = usePoll(
+    3000,
+    { only: ['postings', 'preferences', 'searching'] },
+    { autoStart: false },
+);
+
+watch(
+    () => props.searching,
+    (searching) => (searching ? start() : stop()),
+    { immediate: true },
+);
 
 const lastSearchedAt = computed(() =>
     props.preferences.last_searched_at
@@ -50,18 +64,22 @@ defineOptions({
                     v-bind="JobSearchController.search.form()"
                     #default="{ processing }"
                 >
-                    <Button type="submit" :disabled="processing">
-                        <Spinner v-if="processing" />
+                    <Button type="submit" :disabled="processing || searching">
+                        <Spinner v-if="processing || searching" />
                         <Search v-else />
-                        {{ processing ? 'Searching…' : 'Search now' }}
+                        {{
+                            processing || searching
+                                ? 'Searching…'
+                                : 'Search now'
+                        }}
                     </Button>
                     <p
-                        v-if="processing"
+                        v-if="processing || searching"
                         class="mt-2 text-xs text-muted-foreground"
                         role="status"
                     >
                         Checking sources and scoring jobs. This can take a
-                        minute.
+                        few minutes. New matches appear here by themselves.
                     </p>
                 </Form>
             </div>

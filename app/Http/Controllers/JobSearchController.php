@@ -51,7 +51,7 @@ class JobSearchController extends Controller
 
         RunJobSearch::dispatchAfterResponse($request->user(), $lock->owner());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Search started. It can take a few minutes; reload the page to see new matches.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Search started. It can take a few minutes; new matches appear on this page by themselves.')]);
 
         return back();
     }

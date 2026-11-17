@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form } from "@inertiajs/vue3";
-import { Plus, X } from "@lucide/vue";
-import { ref } from "vue";
+import { Plus, Sparkles, X } from "@lucide/vue";
+import { computed, ref } from "vue";
 import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
 import InputError from "@/components/InputError.vue";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,37 @@ const boards = ref(
         return { key: nextKey++, provider, company: company.join(":") };
     }),
 );
+
+// Developer-friendly companies with remote or European openings, checked against their public boards.
+const suggestedBoards = [
+    { provider: "greenhouse", company: "gitlab" },
+    { provider: "greenhouse", company: "wikimedia" },
+    { provider: "greenhouse", company: "grafanalabs" },
+    { provider: "greenhouse", company: "canonical" },
+    { provider: "greenhouse", company: "catawiki" },
+    { provider: "greenhouse", company: "algolia" },
+    { provider: "ashby", company: "supabase" },
+];
+
+const missingSuggestions = computed(() =>
+    suggestedBoards.filter(
+        (suggestion) =>
+            !boards.value.some(
+                (row) =>
+                    row.provider === suggestion.provider &&
+                    row.company.trim().toLowerCase() === suggestion.company,
+            ),
+    ),
+);
+
+const addSuggestedBoards = () => {
+    // Fill empty rows first so the list doesn't keep a blank line.
+    boards.value = boards.value.filter((row) => row.company.trim() !== "");
+
+    for (const suggestion of missingSuggestions.value) {
+        boards.value.push({ key: nextKey++, ...suggestion });
+    }
+};
 
 const addBoard = () =>
     boards.value.push({ key: nextKey++, provider: "greenhouse", company: "" });
@@ -238,7 +269,25 @@ const addBoard = () =>
                 >
                     <Plus /> Add job board
                 </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="ml-2"
+                    :disabled="
+                        missingSuggestions.length === 0 || boards.length >= 50
+                    "
+                    @click="addSuggestedBoards"
+                >
+                    <Sparkles /> Add suggested boards
+                </Button>
             </div>
+            <p class="text-xs text-muted-foreground">
+                Suggested: GitLab, Wikimedia, Grafana Labs, Canonical, Catawiki,
+                Algolia and Supabase. Remote or European companies that hire
+                developers. They are added to the list; press Save preferences
+                to keep them.
+            </p>
             <p class="text-xs text-muted-foreground">
                 Many companies run their careers page on an applicant tracking
                 system. Job Scout can read the public boards of Greenhouse,

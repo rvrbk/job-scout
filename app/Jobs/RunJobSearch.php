@@ -25,6 +25,22 @@ class RunJobSearch
         return "job-search.{$user->id}";
     }
 
+    /**
+     * Whether a search for this user is in progress right now.
+     */
+    public static function isRunning(User $user): bool
+    {
+        $lock = Cache::lock(self::lockKey($user), 5);
+
+        if ($lock->get()) {
+            $lock->release();
+
+            return false;
+        }
+
+        return true;
+    }
+
     public function handle(JobSearcher $searcher): void
     {
         set_time_limit(0);
