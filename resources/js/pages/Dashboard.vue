@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import StackedBars from '@/components/dashboard/StackedBars.vue';
-import StatTile from '@/components/dashboard/StatTile.vue';
-import Heading from '@/components/Heading.vue';
-import { dashboard } from '@/routes';
-import { index as jobsIndex } from '@/routes/jobs';
-import { index as ledgerIndex } from '@/routes/ledger';
+import { Head, Link } from "@inertiajs/vue3";
+import { computed } from "vue";
+import StackedBars from "@/components/dashboard/StackedBars.vue";
+import StatTile from "@/components/dashboard/StatTile.vue";
+import Heading from "@/components/Heading.vue";
+import { dashboard } from "@/routes";
+import { documents as jobDocuments, index as jobsIndex } from "@/routes/jobs";
+import { index as ledgerIndex } from "@/routes/ledger";
 
 type Split = { label: string; matches: number; below: number };
 
@@ -35,7 +35,7 @@ defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Dashboard',
+                title: "Dashboard",
                 href: dashboard(),
             },
         ],
@@ -48,15 +48,15 @@ const matchSeries = (rows: Split[]) => [
         values: rows.map((row) => row.matches),
     },
     {
-        label: 'Below your minimum',
+        label: "Below your minimum",
         values: rows.map((row) => row.below),
     },
 ];
 
 const ledgerSeries = computed(() => [
-    { label: 'Usable', values: props.ledger.by_type.map((row) => row.usable) },
+    { label: "Usable", values: props.ledger.by_type.map((row) => row.usable) },
     {
-        label: 'Not confirmed yet',
+        label: "Not confirmed yet",
         values: props.ledger.by_type.map((row) => row.other),
     },
 ]);
@@ -64,12 +64,12 @@ const ledgerSeries = computed(() => [
 const best = computed(() =>
     props.jobs.best
         ? `Best: ${props.jobs.best.score}, ${props.jobs.best.title}`
-        : 'No matches yet',
+        : "No matches yet",
 );
 const reviewNote = computed(() =>
     props.documents.to_review > 0
         ? `${props.documents.to_review} waiting for your review`
-        : `of ${props.documents.total} ${props.documents.total === 1 ? 'draft' : 'drafts'}`,
+        : `of ${props.documents.total} ${props.documents.total === 1 ? "draft" : "drafts"}`,
 );
 </script>
 
@@ -89,16 +89,19 @@ const reviewNote = computed(() =>
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile
                 label="Usable facts"
+                :href="ledgerIndex()"
                 :value="ledger.usable_facts"
                 :note="`of ${ledger.total_facts} in your ledger`"
             />
             <StatTile
                 label="Skills"
+                :href="ledgerIndex()"
                 :value="ledger.skills"
                 note="confirmed in your ledger"
             />
             <StatTile
                 label="New jobs"
+                :href="jobsIndex()"
                 :value="jobs.new"
                 :note="
                     jobs.new > 0
@@ -106,9 +109,15 @@ const reviewNote = computed(() =>
                         : 'nothing new right now'
                 "
             />
-            <StatTile label="Job matches" :value="jobs.matches" :note="best" />
+            <StatTile
+                label="Job matches"
+                :href="jobsIndex()"
+                :value="jobs.matches"
+                :note="best"
+            />
             <StatTile
                 label="Approved documents"
+                :href="jobDocuments()"
                 :value="documents.approved"
                 :note="reviewNote"
             />
