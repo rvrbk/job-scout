@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { Form, Link } from '@inertiajs/vue3';
+import { Form, Link } from "@inertiajs/vue3";
 import {
     CircleAlert,
     CircleCheck,
     LoaderCircle,
     Pencil,
+    RefreshCw,
     Trash2,
-} from '@lucide/vue';
-import { ref } from 'vue';
-import DocumentClaimController from '@/actions/App/Http/Controllers/DocumentClaimController';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import type { DocumentClaim } from '@/types';
+} from "@lucide/vue";
+import { ref } from "vue";
+import DocumentClaimController from "@/actions/App/Http/Controllers/DocumentClaimController";
+import InputError from "@/components/InputError.vue";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import type { DocumentClaim } from "@/types";
 
 defineProps<{
     claim: DocumentClaim;
@@ -98,7 +99,7 @@ const editing = ref(false);
                         class="cursor-pointer text-muted-foreground select-none"
                     >
                         {{ claim.facts.length }} cited
-                        {{ claim.facts.length === 1 ? 'fact' : 'facts' }}
+                        {{ claim.facts.length === 1 ? "fact" : "facts" }}
                     </summary>
                     <ul class="mt-1 list-disc space-y-1 pl-5">
                         <li v-for="fact in claim.facts" :key="fact.id">
@@ -117,6 +118,18 @@ const editing = ref(false);
                     @click="editing = true"
                     ><Pencil
                 /></Button>
+                <Link
+                    v-if="
+                        claim.status === 'unsupported' && claim.kind !== 'skill'
+                    "
+                    :href="DocumentClaimController.regenerate(claim.id)"
+                    method="post"
+                    as="button"
+                    preserve-scroll
+                    class="p-2 text-muted-foreground hover:text-foreground"
+                    title="Rewrite this sentence from your ledger"
+                    ><RefreshCw class="size-4"
+                /></Link>
                 <Link
                     :href="DocumentClaimController.destroy(claim.id)"
                     as="button"

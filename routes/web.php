@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('documents/{generatedDocument}', [GeneratedDocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::put('claims/{documentClaim}', [DocumentClaimController::class, 'update'])->name('claims.update');
+    Route::post('claims/{documentClaim}/regenerate', [DocumentClaimController::class, 'regenerate'])->name('claims.regenerate');
     Route::delete('claims/{documentClaim}', [DocumentClaimController::class, 'destroy'])->name('claims.destroy');
 });
 

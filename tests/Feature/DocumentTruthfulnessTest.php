@@ -319,6 +319,55 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertNull($document->fresh()->approved_at);
     }
 
+    public function test_a_flagged_sentence_can_be_regenerated_and_is_verified_again()
+    {
+        $document = GeneratedDocument::factory()->for($this->user)->for($this->posting)->withStatus(DocumentStatus::NeedsReview)->create();
+        $claim = DocumentClaim::factory()->for($document, 'document')->withStatus(ClaimStatus::Unsupported)->create([
+            'ledger_entry_id' => $this->entry->id, 'section' => DocumentClaim::SECTION_EXPERIENCE, 'text' => 'Led the checkout team.', 'verifier_note' => 'Adds leadership.',
+        ]);
+
+        $llm = $this->fakeLlm([
+            ['text' => 'Cut checkout API response time by 40% with query caching.', 'fact_ids' => [$this->fact->id, 9999]],
+            fn () => ['results' => [['claim_id' => $claim->id, 'supported' => true, 'reason' => 'Matches the fact.']]],
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('claims.regenerate', $claim))
+            ->assertRedirect(route('documents.show', $document));
+
+        $claim->refresh();
+        $this->assertSame('Cut checkout API response time by 40% with query caching.', $claim->text);
+        $this->assertSame(ClaimStatus::Supported, $claim->status);
+        $this->assertSame([$this->fact->id], $claim->facts()->pluck('ledger_facts.id')->all());
+        $this->assertSame(DocumentStatus::Verified, $document->fresh()->status);
+        $this->assertStringContainsString('Adds leadership.', $llm->calls[0]['prompt']);
+    }
+
+    public function test_regenerating_keeps_the_flag_when_the_ledger_has_nothing_to_offer()
+    {
+        $document = GeneratedDocument::factory()->for($this->user)->for($this->posting)->withStatus(DocumentStatus::NeedsReview)->create();
+        $claim = DocumentClaim::factory()->for($document, 'document')->withStatus(ClaimStatus::Unsupported)->create(['text' => 'Knows Kubernetes.']);
+
+        $this->fakeLlm([['text' => '', 'fact_ids' => []]]);
+
+        $this->actingAs($this->user)->post(route('claims.regenerate', $claim));
+
+        $claim->refresh();
+        $this->assertSame('Knows Kubernetes.', $claim->text);
+        $this->assertSame(ClaimStatus::Unsupported, $claim->status);
+        $this->assertSame(DocumentStatus::NeedsReview, $document->fresh()->status);
+    }
+
+    public function test_only_flagged_sentences_of_your_own_documents_can_be_regenerated()
+    {
+        $document = GeneratedDocument::factory()->for($this->user)->for($this->posting)->withStatus(DocumentStatus::Verified)->create();
+        $supported = DocumentClaim::factory()->for($document, 'document')->withStatus(ClaimStatus::Supported)->create();
+        $flagged = DocumentClaim::factory()->for($document, 'document')->withStatus(ClaimStatus::Unsupported)->create();
+
+        $this->actingAs($this->user)->post(route('claims.regenerate', $supported))->assertStatus(422);
+        $this->actingAs(User::factory()->create())->post(route('claims.regenerate', $flagged))->assertForbidden();
+    }
+
     public function test_generation_requires_confirmed_facts()
     {
         $this->fact->update(['confirmed_at' => null]);
