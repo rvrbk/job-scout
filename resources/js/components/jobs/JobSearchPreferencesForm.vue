@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from "@inertiajs/vue3";
+import { Form, useHttp } from "@inertiajs/vue3";
 import { Plus, Sparkles, X } from "@lucide/vue";
 import { computed, ref } from "vue";
 import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
@@ -7,6 +7,7 @@ import InputError from "@/components/InputError.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobSearchPreferences } from "@/types";
 
@@ -51,35 +52,61 @@ const boards = ref(
     }),
 );
 
-// Developer-friendly companies with remote or European openings, checked against their public boards.
-const suggestedBoards = [
-    { provider: "greenhouse", company: "gitlab" },
-    { provider: "greenhouse", company: "wikimedia" },
-    { provider: "greenhouse", company: "grafanalabs" },
-    { provider: "greenhouse", company: "canonical" },
-    { provider: "greenhouse", company: "catawiki" },
-    { provider: "greenhouse", company: "algolia" },
-    { provider: "ashby", company: "supabase" },
-];
+type Suggestion = {
+    spec: string;
+    name: string;
+    reason: string;
+    open: number;
+    matching: number;
+};
 
-const missingSuggestions = computed(() =>
-    suggestedBoards.filter(
-        (suggestion) =>
-            !boards.value.some(
-                (row) =>
-                    row.provider === suggestion.provider &&
-                    row.company.trim().toLowerCase() === suggestion.company,
-            ),
-    ),
-);
+const finder = useHttp<
+    Record<string, never>,
+    { boards?: Suggestion[]; message?: string }
+>({});
+const suggestions = ref<Suggestion[] | null>(null);
+const chosen = ref<string[]>([]);
+const finderError = ref<string | null>(null);
 
-const addSuggestedBoards = () => {
-    // Fill empty rows first so the list doesn't keep a blank line.
+const findBoards = async () => {
+    finderError.value = null;
+
+    try {
+        const response = await finder.post(
+            JobSearchController.suggestBoards.url(),
+        );
+
+        suggestions.value = response.boards ?? [];
+        chosen.value = suggestions.value
+            .filter((suggestion) => suggestion.matching > 0)
+            .map((suggestion) => suggestion.spec);
+    } catch {
+        suggestions.value = null;
+        finderError.value =
+            (finder.response as { message?: string } | null)?.message ??
+            "Could not look for boards right now. Try again in a moment.";
+    }
+};
+
+const addChosen = () => {
     boards.value = boards.value.filter((row) => row.company.trim() !== "");
 
-    for (const suggestion of missingSuggestions.value) {
-        boards.value.push({ key: nextKey++, ...suggestion });
+    for (const spec of chosen.value) {
+        const [provider, ...company] = spec.split(":");
+        const name = company.join(":");
+
+        if (
+            !boards.value.some(
+                (row) =>
+                    row.provider === provider &&
+                    row.company.trim().toLowerCase() === name.toLowerCase(),
+            )
+        ) {
+            boards.value.push({ key: nextKey++, provider, company: name });
+        }
     }
+
+    suggestions.value = null;
 };
 
 const addBoard = () =>
@@ -274,20 +301,92 @@ const addBoard = () =>
                     variant="outline"
                     size="sm"
                     class="ml-2"
-                    :disabled="
-                        missingSuggestions.length === 0 || boards.length >= 50
-                    "
-                    @click="addSuggestedBoards"
+                    :disabled="finder.processing || boards.length >= 50"
+                    @click="findBoards"
                 >
-                    <Sparkles /> Add suggested boards
+                    <Spinner v-if="finder.processing" />
+                    <Sparkles v-else />
+                    {{
+                        finder.processing
+                            ? "Looking at your profile…"
+                            : "Find boards for my profile"
+                    }}
                 </Button>
             </div>
-            <p class="text-xs text-muted-foreground">
-                Suggested: GitLab, Wikimedia, Grafana Labs, Canonical, Catawiki,
-                Algolia and Supabase. Remote or European companies that hire
-                developers. They are added to the list; press Save preferences
-                to keep them.
+            <p
+                v-if="finder.processing"
+                class="text-xs text-muted-foreground"
+                role="status"
+            >
+                Matching your ledger and saved preferences against known company
+                boards and checking their open jobs. This takes a few seconds.
             </p>
+            <InputError v-if="finderError" :message="finderError" />
+            <div
+                v-if="suggestions !== null"
+                class="space-y-3 rounded-lg border p-4"
+            >
+                <p
+                    v-if="suggestions.length === 0"
+                    class="text-sm text-muted-foreground"
+                >
+                    No new boards stood out for your profile. Add your own
+                    above, or widen your keywords and locations and try again.
+                </p>
+                <template v-else>
+                    <p class="text-sm font-medium">Suggested for you</p>
+                    <label
+                        v-for="suggestion in suggestions"
+                        :key="suggestion.spec"
+                        class="flex items-start gap-3 text-sm"
+                    >
+                        <input
+                            v-model="chosen"
+                            type="checkbox"
+                            :value="suggestion.spec"
+                            class="mt-1"
+                        />
+                        <span>
+                            <span class="font-medium">{{
+                                suggestion.name
+                            }}</span>
+                            <span class="text-muted-foreground">
+                                ·
+                                {{
+                                    suggestion.matching > 0
+                                        ? `${suggestion.matching} of ${suggestion.open} open jobs fit your filters`
+                                        : `${suggestion.open} open jobs, none fit your filters right now`
+                                }}
+                            </span>
+                            <span
+                                v-if="suggestion.reason"
+                                class="block text-xs text-muted-foreground"
+                                >{{ suggestion.reason }}</span
+                            >
+                        </span>
+                    </label>
+                    <div class="flex gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            :disabled="chosen.length === 0"
+                            @click="addChosen"
+                            >Add selected</Button
+                        >
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            @click="suggestions = null"
+                            >Dismiss</Button
+                        >
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        Boards are only added to the list above. Press Save
+                        preferences to keep them.
+                    </p>
+                </template>
+            </div>
             <p class="text-xs text-muted-foreground">
                 Many companies run their careers page on an applicant tracking
                 system. Job Scout can read the public boards of Greenhouse,

@@ -200,7 +200,7 @@ class JobSearcher
     /**
      * Cheap checks that run before any model call.
      */
-    private function passes(FoundJob $job, JobSearchPreference $preferences): bool
+    public function passes(FoundJob $job, JobSearchPreference $preferences): bool
     {
         if ($job->postedAt !== null && $job->postedAt->lt(now()->subDays(self::MAX_AGE_DAYS))) {
             return false;

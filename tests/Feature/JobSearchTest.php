@@ -561,4 +561,45 @@ class JobSearchTest extends TestCase
 
         $this->assertEqualsCanonicalizing(['Job us', 'Job us-city', 'Job na', 'Job world', 'Job none'], $user->jobPostings()->pluck('title')->all());
     }
+
+    public function test_board_suggestions_come_from_the_catalog_and_count_the_jobs_that_fit()
+    {
+        config(['job_boards.catalog' => [
+            'greenhouse:acme' => ['name' => 'Acme', 'about' => 'Laravel shop.'],
+            'greenhouse:globex' => ['name' => 'Globex', 'about' => 'Cobol shop.'],
+            'ashby:initech' => ['name' => 'Initech', 'about' => 'Already followed.'],
+        ]]);
+        Http::fake([
+            'boards-api.greenhouse.io/v1/boards/acme/*' => Http::response(['jobs' => [
+                ['id' => 1, 'title' => 'Laravel Developer', 'absolute_url' => 'https://example.com/1', 'location' => ['name' => 'Remote'], 'content' => 'Remote work with Laravel'],
+                ['id' => 2, 'title' => 'Accountant', 'absolute_url' => 'https://example.com/2', 'location' => ['name' => 'Remote'], 'content' => 'Remote books'],
+            ]]),
+            '*' => Http::response([], 404),
+        ]);
+        $this->app->instance(StructuredLlm::class, new class implements StructuredLlm
+        {
+            public function generate(string $system, string $prompt, array $schema): array
+            {
+                return ['boards' => [
+                    ['index' => 0, 'reason' => 'Laravel overlap.'],
+                    ['index' => 1, 'reason' => 'Board that is down.'],
+                    ['index' => 7, 'reason' => 'Not in the catalog.'],
+                ]];
+            }
+        });
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['keywords' => ['laravel'], 'remote_preference' => 'any', 'boards' => ['ashby:initech'], 'min_score' => 60]);
+
+        $this->actingAs($user)->postJson(route('jobs.boards.suggest'))
+            ->assertOk()
+            ->assertJsonCount(1, 'boards')
+            ->assertJsonPath('boards.0.spec', 'greenhouse:acme')
+            ->assertJsonPath('boards.0.open', 2)
+            ->assertJsonPath('boards.0.matching', 1);
+    }
+
+    public function test_board_suggestions_need_confirmed_facts()
+    {
+        $this->actingAs(User::factory()->create())->postJson(route('jobs.boards.suggest'))->assertStatus(422);
+    }
 }

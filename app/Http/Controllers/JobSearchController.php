@@ -6,11 +6,15 @@ use App\Http\Requests\JobSearchPreferenceRequest;
 use App\Jobs\RunJobSearch;
 use App\Models\JobPosting;
 use App\Services\Cv\LedgerSnapshot;
+use App\Services\JobSearch\BoardFinder;
+use App\Services\Llm\LlmException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use RuntimeException;
 
 class JobSearchController extends Controller
 {
@@ -54,6 +58,22 @@ class JobSearchController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Search started. It can take a few minutes; new matches appear on this page by themselves.')]);
 
         return back();
+    }
+
+    /**
+     * Company boards that suit the user's ledger and saved preferences, with how many of their open jobs fit.
+     */
+    public function suggestBoards(Request $request, BoardFinder $finder): JsonResponse
+    {
+        set_time_limit(120);
+
+        try {
+            return response()->json(['boards' => $finder->suggest($request->user())]);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        } catch (LlmException) {
+            return response()->json(['message' => __('Could not look for boards right now. Try again in a moment.')], 503);
+        }
     }
 
     public function save(JobPosting $jobPosting): RedirectResponse
