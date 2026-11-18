@@ -49,6 +49,9 @@ watch(
     { immediate: true },
 );
 
+// The textarea keeps its own value, so it is cleared here rather than by the form reset.
+const note = ref("");
+
 const submitNote = (event: KeyboardEvent) =>
     (event.target as HTMLTextAreaElement).form?.requestSubmit();
 
@@ -98,7 +101,7 @@ const confirmedFactCount = computed(
             <Form
                 v-bind="LedgerImportController.note.form()"
                 class="space-y-2"
-                reset-on-success
+                @success="note = ''"
                 #default="{ errors, processing }"
             >
                 <Label for="note" class="sr-only"
@@ -106,6 +109,7 @@ const confirmedFactCount = computed(
                 >
                 <Textarea
                     id="note"
+                    v-model="note"
                     name="note"
                     rows="4"
                     maxlength="5000"
