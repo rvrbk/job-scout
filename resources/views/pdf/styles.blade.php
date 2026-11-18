@@ -3,6 +3,9 @@
 @font-face { font-family: 'Noto Sans'; font-weight: normal; font-style: normal; src: url('{{ $fonts }}/NotoSans-Regular.ttf') format('truetype'); }
 @font-face { font-family: 'Noto Sans'; font-weight: bold; font-style: normal; src: url('{{ $fonts }}/NotoSans-Bold.ttf') format('truetype'); }
 @font-face { font-family: 'Noto Sans'; font-weight: normal; font-style: italic; src: url('{{ $fonts }}/NotoSans-Italic.ttf') format('truetype'); }
+@font-face { font-family: 'Noto Serif'; font-weight: normal; font-style: normal; src: url('{{ $fonts }}/NotoSerif-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Noto Serif'; font-weight: bold; font-style: normal; src: url('{{ $fonts }}/NotoSerif-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'Noto Serif'; font-weight: normal; font-style: italic; src: url('{{ $fonts }}/NotoSerif-Italic.ttf') format('truetype'); }
 @page { margin: 16mm 17mm 16mm 17mm; }
 body { font-family: 'Noto Sans', sans-serif; font-size: 9pt; line-height: 1.3; color: #27272a; }
 .display, h1, h2, .entry-title, .entry-org, .chip { font-family: 'Ubuntu', sans-serif; }
@@ -60,39 +63,14 @@ body.style-minimal { color: #111111; }
 .style-bold h2 { color: #18181b; border-bottom: 0; border-left: 4pt solid #f59e0b; padding: 1pt 0 1pt 7pt; }
 .style-bold .chip { background: #fffbeb; border-color: #fcd34d; color: #78350f; border-radius: 3pt; }
 
-/* Layouts. Classic is the base above. */
-
-/* Compact: tighter spacing so more fits on a page. */
-.layout-compact { font-size: 8.5pt; line-height: 1.25; }
-.layout-compact h1 { font-size: 22pt; }
-.layout-compact .rule { margin: 6pt 0 8pt; }
-.layout-compact h2 { margin: 11pt 0 5pt; }
-.layout-compact .entry { margin-bottom: 7pt; }
-.layout-compact .summary { font-size: 9pt; }
-.layout-compact .letter p { font-size: 9pt; line-height: 1.4; margin-bottom: 7pt; }
-.layout-compact .chip { padding: 1pt 5pt; margin: 0 2pt 3pt 0; font-size: 7.5pt; }
-
-/* Sidebar: a tinted side column repeated on every page, its content on the first. Dompdf has no flex or grid, so the
-   side column is positioned absolutely and the main column is indented. */
-.layout-sidebar .side-bg { position: fixed; left: -17mm; top: -16mm; width: 66mm; height: 297mm; background: #f0fdfa; }
-.layout-sidebar .side { position: absolute; left: 0; top: 0; width: 50mm; }
-.layout-sidebar .main { margin-left: 56mm; }
-.layout-sidebar .side h1 { font-size: 19pt; line-height: 1.15; margin-bottom: 6pt; }
-.layout-sidebar .side h2 { margin: 14pt 0 6pt; letter-spacing: 1pt; font-size: 8pt; }
-.layout-sidebar .side .contact { margin-top: 0; line-height: 1.5; word-wrap: break-word; }
-.layout-sidebar .side .period { float: none; display: block; }
-.layout-sidebar .side .credential { margin-bottom: 7pt; }
-.layout-sidebar .side .chip { display: block; background: transparent; border: 0; color: inherit; padding: 0; margin: 0 0 3pt; font-size: 8.5pt; border-radius: 0; }
-.layout-sidebar .main .summary { margin-top: 0; }
-.layout-sidebar .main h2:first-child { margin-top: 0; }
-.header-split { width: 100%; border-collapse: collapse; }
-.header-split td { vertical-align: top; padding: 0; }
-.header-split .header-contact { text-align: right; margin: 0; }
-.style-modern.layout-sidebar .side-bg { background: #eef2ff; }
-.style-minimal.layout-sidebar .side-bg { background: #f4f4f5; }
-.style-bold.layout-sidebar .side-bg { background: #18181b; }
-.style-bold.layout-sidebar .side h1 { color: #ffffff; }
-.style-bold.layout-sidebar .side, .style-bold.layout-sidebar .side .contact, .style-bold.layout-sidebar .side .credential, .style-bold.layout-sidebar .side .muted, .style-bold.layout-sidebar .side .period { color: #e4e4e7; }
-.style-bold.layout-sidebar .side h2 { color: #ffffff; }
-.style-bold.layout-sidebar .side a, .style-bold.layout-sidebar .side .contact a, .style-bold.layout-sidebar .side .credential a { color: #fbbf24; }
-.style-bold.layout-sidebar .side .chip { color: #e4e4e7; }
+/* Fonts. Last, so they win over the per-style font rules above. Body text, then headings, entry titles and tags. */
+body.font-standard { font-family: 'Noto Sans', sans-serif; }
+.font-standard .display, .font-standard h1, .font-standard h2, .font-standard .entry-title, .font-standard .entry-org, .font-standard .chip { font-family: 'Ubuntu', sans-serif; }
+body.font-clean { font-family: 'Noto Sans', sans-serif; }
+.font-clean .display, .font-clean h1, .font-clean h2, .font-clean .entry-title, .font-clean .entry-org, .font-clean .chip { font-family: 'Noto Sans', sans-serif; }
+body.font-friendly { font-family: 'Ubuntu', sans-serif; }
+.font-friendly .display, .font-friendly h1, .font-friendly h2, .font-friendly .entry-title, .font-friendly .entry-org, .font-friendly .chip { font-family: 'Ubuntu', sans-serif; }
+body.font-serif { font-family: 'Noto Serif', serif; }
+.font-serif .display, .font-serif h1, .font-serif h2, .font-serif .entry-title, .font-serif .entry-org, .font-serif .chip { font-family: 'Noto Serif', serif; }
+body.font-editorial { font-family: 'Noto Sans', sans-serif; }
+.font-editorial .display, .font-editorial h1, .font-editorial h2, .font-editorial .entry-title, .font-editorial .entry-org, .font-editorial .chip { font-family: 'Noto Serif', serif; }

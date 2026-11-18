@@ -1,37 +1,37 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from "@inertiajs/vue3";
-import { Download } from "@lucide/vue";
-import { computed, ref, watch } from "vue";
-import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
-import LookPicker from "@/components/documents/LookPicker.vue";
-import ClaimRow from "@/components/documents/ClaimRow.vue";
-import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
-import Heading from "@/components/Heading.vue";
-import InputError from "@/components/InputError.vue";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-    documents as jobsDocuments,
-    index as jobsIndex,
-    show as showJob,
-} from "@/routes/jobs";
-import type { DocumentClaim, GeneratedDocument, StyleOption } from "@/types";
+import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
+import { Download } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
+import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
+import LookPicker from '@/components/documents/LookPicker.vue';
+import ClaimRow from '@/components/documents/ClaimRow.vue';
+import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
+import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { documents as jobsDocuments, index as jobsIndex, show as showJob } from '@/routes/jobs';
+import type {
+    DocumentClaim,
+    GeneratedDocument,
+    StyleOption,
+} from '@/types';
 
 const props = defineProps<{
     document: GeneratedDocument;
     documentStyles: StyleOption[];
-    documentLayouts: StyleOption[];
+    documentFonts: StyleOption[];
 }>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: "Jobs", href: jobsIndex() }],
+        breadcrumbs: [{ title: 'Jobs', href: jobsIndex() }],
     },
 });
 
 const { start, stop } = usePoll(
     2000,
-    { only: ["document"] },
+    { only: ['document'] },
     { autoStart: false },
 );
 
@@ -44,10 +44,10 @@ watch(
 const showPreview = ref(false);
 
 const choosingLook = ref(false);
-const layout = ref(props.document.layout);
+const font = ref(props.document.font);
 const style = ref(props.document.style);
 
-const bySection = (section: DocumentClaim["section"]) =>
+const bySection = (section: DocumentClaim['section']) =>
     props.document.claims.filter((claim) => claim.section === section);
 
 const groupClaims = (claims: DocumentClaim[]) =>
@@ -59,14 +59,14 @@ const groupClaims = (claims: DocumentClaim[]) =>
         }, {}),
     );
 
-const summary = computed(() => bySection("summary"));
-const experience = computed(() => groupClaims(bySection("experience")));
-const skills = computed(() => bySection("skills"));
-const paragraphs = computed(() => groupClaims(bySection("letter")));
+const summary = computed(() => bySection('summary'));
+const experience = computed(() => groupClaims(bySection('experience')));
+const skills = computed(() => bySection('skills'));
+const paragraphs = computed(() => groupClaims(bySection('letter')));
 
 const flaggedCount = computed(
     () =>
-        props.document.claims.filter((claim) => claim.status === "unsupported")
+        props.document.claims.filter((claim) => claim.status === 'unsupported')
             .length,
 );
 
@@ -90,7 +90,7 @@ const locked = computed(() => props.document.is_processing);
                     :description="document.job?.company ?? undefined"
                 />
                 <p class="text-sm text-muted-foreground">
-                    PDF: {{ document.layout_label }} layout,
+                    PDF: {{ document.font_label }} font,
                     {{ document.style_label }} colours · Tone:
                     {{ document.tone_label }}
                     <button
@@ -99,7 +99,7 @@ const locked = computed(() => props.document.is_processing);
                         class="underline"
                         @click="choosingLook = true"
                     >
-                        Not happy with the layout? Choose a different style
+                        Not happy? Choose a different style
                     </button>
                 </p>
                 <Form
@@ -113,9 +113,9 @@ const locked = computed(() => props.document.is_processing);
                     v-slot="{ errors, processing }"
                 >
                     <LookPicker
-                        v-model:layout="layout"
+                        v-model:font="font"
                         v-model:style="style"
-                        :document-layouts="documentLayouts"
+                        :document-fonts="documentFonts"
                         :document-styles="documentStyles"
                     />
                     <p class="text-xs text-muted-foreground">
@@ -134,7 +134,7 @@ const locked = computed(() => props.document.is_processing);
                             >Cancel</Button
                         >
                     </div>
-                    <InputError :message="errors.layout || errors.style" />
+                    <InputError :message="errors.font || errors.style" />
                 </Form>
                 <div class="flex items-center gap-2">
                     <DocumentStatusBadge :status="document.status" />
@@ -146,7 +146,7 @@ const locked = computed(() => props.document.is_processing);
                         "
                         class="text-sm text-muted-foreground underline"
                         >{{
-                            document.job ? "Back to job" : "Back to jobs"
+                            document.job ? 'Back to job' : 'Back to jobs'
                         }}</Link
                     >
                 </div>
@@ -196,9 +196,9 @@ const locked = computed(() => props.document.is_processing);
             class="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm"
         >
             {{ flaggedCount }}
-            {{ flaggedCount === 1 ? "sentence is" : "sentences are" }} not
+            {{ flaggedCount === 1 ? 'sentence is' : 'sentences are' }} not
             backed by your ledger. Rewrite or remove
-            {{ flaggedCount === 1 ? "it" : "them" }}, or add the missing fact to
+            {{ flaggedCount === 1 ? 'it' : 'them' }}, or add the missing fact to
             your ledger and draft again. You can approve once everything is
             verified.
         </div>
@@ -275,7 +275,7 @@ const locked = computed(() => props.document.is_processing);
                         <p class="text-sm font-medium">
                             {{
                                 bullets[0].entry_heading ??
-                                "Entry no longer in your ledger"
+                                'Entry no longer in your ledger'
                             }}
                         </p>
                         <ClaimRow
@@ -323,7 +323,7 @@ const locked = computed(() => props.document.is_processing);
                     size="sm"
                     @click="showPreview = !showPreview"
                 >
-                    {{ showPreview ? "Hide preview" : "Show preview" }}
+                    {{ showPreview ? 'Hide preview' : 'Show preview' }}
                 </Button>
                 <pre
                     v-if="showPreview"

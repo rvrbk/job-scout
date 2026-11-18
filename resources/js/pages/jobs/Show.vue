@@ -1,42 +1,42 @@
 <script setup lang="ts">
-import { Head, Link } from "@inertiajs/vue3";
-import { Bookmark, ExternalLink, Trash2 } from "@lucide/vue";
-import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
-import JobPostingController from "@/actions/App/Http/Controllers/JobPostingController";
-import JobSearchController from "@/actions/App/Http/Controllers/JobSearchController";
-import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
-import Heading from "@/components/Heading.vue";
-import DraftDocumentForm from "@/components/documents/DraftDocumentForm.vue";
-import { show as showDocument } from "@/routes/documents";
-import { index } from "@/routes/jobs";
+import { Head, Link } from '@inertiajs/vue3';
+import { Bookmark, ExternalLink, Trash2 } from '@lucide/vue';
+import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
+import JobPostingController from '@/actions/App/Http/Controllers/JobPostingController';
+import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
+import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
+import Heading from '@/components/Heading.vue';
+import DraftDocumentForm from '@/components/documents/DraftDocumentForm.vue';
+import { show as showDocument } from '@/routes/documents';
+import { index } from '@/routes/jobs';
 import type {
     DocumentSummary,
     JobPosting,
     Option,
     StyleOption,
     ToneOption,
-} from "@/types";
+} from '@/types';
 
 defineProps<{
     posting: JobPosting;
     documents: DocumentSummary[];
     documentTypes: Option[];
     documentStyles: StyleOption[];
-    documentLayouts: StyleOption[];
+    documentFonts: StyleOption[];
     documentTones: ToneOption[];
     defaultStyle: string;
-    defaultLayout: string;
+    defaultFont: string;
     preferredTone: string | null;
 }>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: "Jobs", href: index() }],
+        breadcrumbs: [{ title: 'Jobs', href: index() }],
     },
 });
 
 const confirmDelete = () =>
-    window.confirm("Remove this job and every draft made for it?");
+    window.confirm('Remove this job and every draft made for it?');
 </script>
 
 <template>
@@ -104,10 +104,10 @@ const confirmDelete = () =>
                     :action="GeneratedDocumentController.store.form(posting.id)"
                     :document-types="documentTypes"
                     :document-styles="documentStyles"
-                    :document-layouts="documentLayouts"
+                    :document-fonts="documentFonts"
                     :document-tones="documentTones"
                     :default-style="defaultStyle"
-                    :default-layout="defaultLayout"
+                    :default-font="defaultFont"
                     :preferred-tone="preferredTone"
                 />
             </div>
@@ -131,8 +131,7 @@ const confirmDelete = () =>
                                     {{ document.type_label }}
                                 </p>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ document.created_at }} ·
-                                    {{ document.style_label }} style ·
+                                    {{ document.created_at }} · {{ document.style_label }} style ·
                                     {{ document.tone_label }} tone
                                 </p>
                             </div>

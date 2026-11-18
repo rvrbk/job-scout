@@ -33,10 +33,10 @@ class DocumentRenderer
     {
         $document->loadMissing(['claims.entry', 'claims.facts', 'user']);
 
-        $shared = ['fonts' => resource_path('fonts'), 'style' => $document->style->value, 'layout' => $document->layout->value];
+        $shared = ['fonts' => resource_path('fonts'), 'style' => $document->style->value, 'font' => $document->font->value];
 
         $html = $document->type === DocumentType::Cv
-            ? view("pdf.cv.{$document->layout->value}", [...$this->cvViewData($document), ...$shared])->render()
+            ? view('pdf.cv', [...$this->cvViewData($document), ...$shared])->render()
             : view('pdf.cover-letter', [...$this->coverLetterViewData($document), ...$shared])->render();
 
         $options = new Options;

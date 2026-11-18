@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 /**
- * The colours and type of a CV or cover letter exported as PDF (the page layout is a DocumentLayout). Only the typesetting differs, never the content.
+ * The colours and type of a CV or cover letter exported as PDF (the typeface is a DocumentFont). Only the typesetting differs, never the content.
  */
 enum DocumentStyle: string
 {

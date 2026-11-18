@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\DocumentLayout;
+use App\Enums\DocumentFont;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -47,7 +47,7 @@ class GeneratedDocumentController extends Controller
         $validated = $request->validate([
             'type' => ['required', Rule::enum(DocumentType::class)],
             'style' => ['nullable', Rule::enum(DocumentStyle::class)],
-            'layout' => ['nullable', Rule::enum(DocumentLayout::class)],
+            'font' => ['nullable', Rule::enum(DocumentFont::class)],
             'tone' => ['nullable', Rule::enum(DocumentTone::class)],
         ]);
 
@@ -59,13 +59,13 @@ class GeneratedDocumentController extends Controller
 
         $user = $request->user();
         $style = DocumentStyle::tryFrom($validated['style'] ?? '') ?? $user->documentStyle();
-        $layout = DocumentLayout::tryFrom($validated['layout'] ?? '') ?? $user->documentLayout();
+        $font = DocumentFont::tryFrom($validated['font'] ?? '') ?? $user->documentFont();
         $tone = DocumentTone::tryFrom($validated['tone'] ?? '') ?? DocumentTone::Professional;
 
         // Remember the choice so the next document starts from the same look and tone.
         $user->forceFill([
             'preferred_document_style' => $style,
-            'preferred_document_layout' => $layout,
+            'preferred_document_font' => $font,
             'preferred_document_tone' => $tone,
         ])->save();
 
@@ -73,7 +73,7 @@ class GeneratedDocumentController extends Controller
             'job_posting_id' => $jobPosting?->id,
             'type' => $validated['type'],
             'style' => $style,
-            'layout' => $layout,
+            'font' => $font,
             'tone' => $tone,
             'status' => DocumentStatus::Generating,
         ]);
@@ -98,12 +98,12 @@ class GeneratedDocumentController extends Controller
     /**
      * @return list<array{value: string, label: string, description: string}>
      */
-    public static function layoutOptions(): array
+    public static function fontOptions(): array
     {
-        return collect(DocumentLayout::cases())->map(fn (DocumentLayout $layout) => [
-            'value' => $layout->value,
-            'label' => $layout->label(),
-            'description' => $layout->description(),
+        return collect(DocumentFont::cases())->map(fn (DocumentFont $font) => [
+            'value' => $font->value,
+            'label' => $font->label(),
+            'description' => $font->description(),
         ])->all();
     }
 
@@ -115,15 +115,15 @@ class GeneratedDocumentController extends Controller
 
         return Inertia::render('documents/Show', [
             'documentStyles' => $this->styleOptions(),
-            'documentLayouts' => $this->layoutOptions(),
+            'documentFonts' => $this->fontOptions(),
             'document' => [
                 'id' => $generatedDocument->id,
                 'type' => $generatedDocument->type->value,
                 'type_label' => $generatedDocument->type->label(),
                 'style' => $generatedDocument->style->value,
-                'layout' => $generatedDocument->layout->value,
+                'font' => $generatedDocument->font->value,
                 'style_label' => $generatedDocument->style->label(),
-                'layout_label' => $generatedDocument->layout->label(),
+                'font_label' => $generatedDocument->font->label(),
                 'tone_label' => $generatedDocument->tone->label(),
                 'status' => $generatedDocument->status->value,
                 'is_processing' => $generatedDocument->status->isProcessing(),
@@ -165,17 +165,17 @@ class GeneratedDocumentController extends Controller
 
         $validated = $request->validate([
             'style' => ['required', Rule::enum(DocumentStyle::class)],
-            'layout' => ['required', Rule::enum(DocumentLayout::class)],
+            'font' => ['required', Rule::enum(DocumentFont::class)],
         ]);
 
         $generatedDocument->update($validated);
 
         $request->user()->forceFill([
             'preferred_document_style' => $validated['style'],
-            'preferred_document_layout' => $validated['layout'],
+            'preferred_document_font' => $validated['font'],
         ])->save();
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Layout updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Look updated.')]);
 
         return to_route('documents.show', $generatedDocument);
     }

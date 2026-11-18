@@ -10,7 +10,7 @@ export type ToneOption = StyleOption;
 export type LedgerImport = {
     running: boolean;
     /** What is being processed while running: an uploaded CV or a typed note. */
-    source: "cv" | "note" | null;
+    source: 'cv' | 'note' | null;
     result:
         | { entries: number; facts: number; error?: never }
         | { error: string; entries?: never; facts?: never }
@@ -50,15 +50,15 @@ export type JobPostingSummary = {
     saved: boolean;
     is_new: boolean;
     source: string | null;
-    found_by: { trigger: "scheduled" | "manual"; at: string } | null;
+    found_by: { trigger: 'scheduled' | 'manual'; at: string } | null;
     match_score: number | null;
     match_reason: string | null;
     documents_count: number;
-    documents: Pick<DocumentSummary, "type" | "type_label" | "status">[];
+    documents: Pick<DocumentSummary, 'type' | 'type_label' | 'status'>[];
     created_at: string | null;
 };
 
-export type WorkMode = "any" | "hybrid" | "remote_only";
+export type WorkMode = 'any' | 'hybrid' | 'remote_only';
 
 export type JobSearchPreferences = {
     locations: { place: string; mode: WorkMode }[];
@@ -86,19 +86,19 @@ export type JobPosting = {
 };
 
 export type DocumentStatus =
-    | "generating"
-    | "verifying"
-    | "needs_review"
-    | "verified"
-    | "approved"
-    | "failed";
+    | 'generating'
+    | 'verifying'
+    | 'needs_review'
+    | 'verified'
+    | 'approved'
+    | 'failed';
 
 export type DocumentSummary = {
     id: number;
     type: string;
     type_label: string;
     style_label: string;
-    layout_label: string;
+    font_label: string;
     tone_label: string;
     status: DocumentStatus;
     created_at: string | null;
@@ -106,11 +106,11 @@ export type DocumentSummary = {
 
 export type DocumentClaim = {
     id: number;
-    section: "summary" | "experience" | "skills" | "letter";
+    section: 'summary' | 'experience' | 'skills' | 'letter';
     group: number;
-    kind: "claim" | "framing" | "skill";
+    kind: 'claim' | 'framing' | 'skill';
     text: string;
-    status: "pending" | "supported" | "unsupported";
+    status: 'pending' | 'supported' | 'unsupported';
     verifier_note: string | null;
     entry_heading: string | null;
     facts: { id: number; statement: string }[];
@@ -119,11 +119,11 @@ export type DocumentClaim = {
 export type GeneratedDocument = {
     id: number;
     style: string;
-    layout: string;
-    type: "cv" | "cover_letter";
+    font: string;
+    type: 'cv' | 'cover_letter';
     type_label: string;
     style_label: string;
-    layout_label: string;
+    font_label: string;
     tone_label: string;
     status: DocumentStatus;
     is_processing: boolean;

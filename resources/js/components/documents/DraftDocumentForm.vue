@@ -1,33 +1,33 @@
 <script setup lang="ts">
-import { Form } from "@inertiajs/vue3";
-import { ref } from "vue";
-import LookPicker from "@/components/documents/LookPicker.vue";
-import InputError from "@/components/InputError.vue";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import type { Option, StyleOption, ToneOption } from "@/types";
+import { Form } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import LookPicker from '@/components/documents/LookPicker.vue';
+import InputError from '@/components/InputError.vue';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import type { Option, StyleOption, ToneOption } from '@/types';
 
 const props = defineProps<{
     // The Wayfinder form for the route that creates the document.
     action: {
         action: string;
-        method: "get" | "post" | "put" | "patch" | "delete";
+        method: 'get' | 'post' | 'put' | 'patch' | 'delete';
     };
     documentTypes: Option[];
     documentStyles: StyleOption[];
-    documentLayouts: StyleOption[];
+    documentFonts: StyleOption[];
     documentTones: ToneOption[];
     // The look this user gets: what they last chose, else one assigned to them.
     defaultStyle: string;
-    defaultLayout: string;
+    defaultFont: string;
     preferredTone: string | null;
 }>();
 
 const style = ref(props.defaultStyle);
-const layout = ref(props.defaultLayout);
+const font = ref(props.defaultFont);
 const choosingLook = ref(false);
 const tone = ref(
-    props.preferredTone ?? props.documentTones[0]?.value ?? "professional",
+    props.preferredTone ?? props.documentTones[0]?.value ?? 'professional',
 );
 </script>
 
@@ -36,8 +36,7 @@ const tone = ref(
         <div class="space-y-2">
             <p class="text-sm text-muted-foreground">
                 PDF look:
-                {{ documentLayouts.find((o) => o.value === layout)?.label }}
-                layout,
+                {{ documentFonts.find((o) => o.value === font)?.label }} font,
                 {{ documentStyles.find((o) => o.value === style)?.label }}
                 colours.
                 <button
@@ -52,9 +51,9 @@ const tone = ref(
             <!-- v-show, so the chosen values are submitted even while hidden. -->
             <LookPicker
                 v-show="choosingLook"
-                v-model:layout="layout"
+                v-model:font="font"
                 v-model:style="style"
-                :document-layouts="documentLayouts"
+                :document-fonts="documentFonts"
                 :document-styles="documentStyles"
             />
         </div>
@@ -90,10 +89,6 @@ const tone = ref(
                 Draft {{ documentType.label }}
             </Button>
         </div>
-        <InputError
-            :message="
-                errors.type || errors.layout || errors.style || errors.tone
-            "
-        />
+        <InputError :message="errors.type || errors.font || errors.style || errors.tone" />
     </Form>
 </template>

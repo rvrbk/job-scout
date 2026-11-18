@@ -1,5 +1,11 @@
-@include('pdf.partials.document-start')
-<body class="style-{{ $style }} layout-{{ $layout }}">
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ $name }}</title>
+    <style>@include('pdf.styles')</style>
+</head>
+<body class="style-{{ $style }} font-{{ $font }}">
     @include('pdf.header')
 
     <div class="letter">

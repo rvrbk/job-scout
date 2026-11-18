@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ClaimKind;
 use App\Enums\ClaimStatus;
-use App\Enums\DocumentLayout;
+use App\Enums\DocumentFont;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -473,33 +473,33 @@ class DocumentTruthfulnessTest extends TestCase
         )];
     }
 
-    public function test_the_chosen_look_is_stored_and_every_layout_and_style_exports_a_pdf()
+    public function test_the_chosen_look_is_stored_and_every_font_and_style_exports_a_pdf()
     {
         $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
 
-        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'bold', 'layout' => 'sidebar']);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'bold', 'font' => 'serif']);
 
         $document = GeneratedDocument::sole();
         $this->assertSame(DocumentStyle::Bold, $document->style);
-        $this->assertSame(DocumentLayout::Sidebar, $document->layout);
+        $this->assertSame(DocumentFont::Serif, $document->font);
         $this->actingAs($this->user)->post(route('documents.approve', $document));
 
-        foreach (DocumentLayout::cases() as $layout) {
+        foreach (DocumentFont::cases() as $font) {
             foreach (DocumentStyle::cases() as $style) {
-                $document->update(['style' => $style, 'layout' => $layout]);
+                $document->update(['style' => $style, 'font' => $font]);
 
                 $pdf = $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk()->getContent();
 
                 $this->assertStringStartsWith('%PDF-', $pdf);
 
                 if ($dir = getenv('STYLE_PREVIEW_DIR')) {
-                    file_put_contents("{$dir}/cv-{$layout->value}-{$style->value}.pdf", $pdf);
+                    file_put_contents("{$dir}/cv-{$font->value}-{$style->value}.pdf", $pdf);
                 }
             }
         }
     }
 
-    public function test_a_cover_letter_exports_a_pdf_in_every_layout()
+    public function test_a_cover_letter_exports_a_pdf_in_every_font()
     {
         $this->fakeLlm([$this->letterOutput(), $this->allSupported()]);
         $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cover_letter']);
@@ -507,38 +507,38 @@ class DocumentTruthfulnessTest extends TestCase
         $document = GeneratedDocument::sole();
         $this->actingAs($this->user)->post(route('documents.approve', $document));
 
-        foreach (DocumentLayout::cases() as $layout) {
-            $document->update(['layout' => $layout]);
+        foreach (DocumentFont::cases() as $font) {
+            $document->update(['font' => $font]);
 
             $pdf = $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk()->getContent();
 
             $this->assertStringStartsWith('%PDF-', $pdf);
 
             if ($dir = getenv('STYLE_PREVIEW_DIR')) {
-                file_put_contents("{$dir}/letter-{$layout->value}.pdf", $pdf);
+                file_put_contents("{$dir}/letter-{$font->value}.pdf", $pdf);
             }
         }
     }
 
     public function test_a_user_gets_a_stable_look_assigned_until_they_choose_one()
     {
-        $this->assertNull($this->user->preferred_document_layout);
-        $this->assertSame(DocumentLayout::defaultFor($this->user->id), $this->user->documentLayout());
+        $this->assertNull($this->user->preferred_document_font);
+        $this->assertSame(DocumentFont::defaultFor($this->user->id), $this->user->documentFont());
         $this->assertSame(DocumentStyle::defaultFor($this->user->id), $this->user->documentStyle());
 
         $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
         $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
 
         $document = GeneratedDocument::sole();
-        $this->assertSame($this->user->documentLayout(), $document->layout);
+        $this->assertSame($this->user->documentFont(), $document->font);
         $this->assertSame($this->user->documentStyle(), $document->style);
     }
 
-    public function test_the_assigned_looks_are_spread_over_every_layout_and_style()
+    public function test_the_assigned_looks_are_spread_over_every_font_and_style()
     {
         $ids = range(1, 200);
 
-        $this->assertCount(count(DocumentLayout::cases()), collect($ids)->map(fn (int $id) => DocumentLayout::defaultFor($id))->unique());
+        $this->assertCount(count(DocumentFont::cases()), collect($ids)->map(fn (int $id) => DocumentFont::defaultFor($id))->unique());
         $this->assertCount(count(DocumentStyle::cases()), collect($ids)->map(fn (int $id) => DocumentStyle::defaultFor($id))->unique());
     }
 
@@ -550,21 +550,21 @@ class DocumentTruthfulnessTest extends TestCase
         $this->actingAs($this->user)->post(route('documents.approve', $document));
 
         $this->actingAs($this->user)
-            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'layout' => 'compact'])
+            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'font' => 'friendly'])
             ->assertRedirect(route('documents.show', $document));
 
         $document->refresh();
         $this->assertSame(DocumentStyle::Minimal, $document->style);
-        $this->assertSame(DocumentLayout::Compact, $document->layout);
+        $this->assertSame(DocumentFont::Friendly, $document->font);
         $this->assertSame(DocumentStatus::Approved, $document->status);
-        $this->assertSame(DocumentLayout::Compact, $this->user->fresh()->preferred_document_layout);
+        $this->assertSame(DocumentFont::Friendly, $this->user->fresh()->preferred_document_font);
 
         $this->actingAs($this->user)
-            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'layout' => 'nope'])
-            ->assertSessionHasErrors('layout');
+            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'font' => 'nope'])
+            ->assertSessionHasErrors('font');
 
         $this->actingAs(User::factory()->create())
-            ->patch(route('documents.update-look', $document), ['style' => 'bold', 'layout' => 'classic'])
+            ->patch(route('documents.update-look', $document), ['style' => 'bold', 'font' => 'classic'])
             ->assertForbidden();
     }
 
@@ -591,15 +591,15 @@ class DocumentTruthfulnessTest extends TestCase
         $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
             ->assertInertia(fn ($page) => $page->where('preferredTone', null)
                 ->where('defaultStyle', $this->user->documentStyle()->value)
-                ->where('defaultLayout', $this->user->documentLayout()->value));
+                ->where('defaultFont', $this->user->documentFont()->value));
 
         $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
-        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'minimal', 'layout' => 'compact', 'tone' => 'warm']);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'minimal', 'font' => 'friendly', 'tone' => 'warm']);
 
         $this->assertSame(DocumentTone::Warm, $this->user->fresh()->preferred_document_tone);
 
         $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
-            ->assertInertia(fn ($page) => $page->where('preferredTone', 'warm')->where('defaultStyle', 'minimal')->where('defaultLayout', 'compact'));
+            ->assertInertia(fn ($page) => $page->where('preferredTone', 'warm')->where('defaultStyle', 'minimal')->where('defaultFont', 'friendly'));
     }
 
     public function test_the_writing_sample_is_sent_to_the_model_as_a_style_reference_only_when_set()
@@ -617,15 +617,15 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertStringContainsString('not a source of facts', $llm->calls[0]['prompt']);
     }
 
-    public function test_an_unknown_style_or_layout_is_rejected()
+    public function test_an_unknown_style_or_font_is_rejected()
     {
         $this->actingAs($this->user)
             ->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'comic-sans'])
             ->assertSessionHasErrors('style');
 
         $this->actingAs($this->user)
-            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'layout' => 'masonry'])
-            ->assertSessionHasErrors('layout');
+            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'font' => 'masonry'])
+            ->assertSessionHasErrors('font');
 
         $this->assertSame(0, GeneratedDocument::count());
     }

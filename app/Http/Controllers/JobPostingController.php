@@ -108,7 +108,7 @@ class JobPostingController extends Controller
                 'type' => $document->type->value,
                 'type_label' => $document->type->label(),
                 'style_label' => $document->style->label(),
-                'layout_label' => $document->layout->label(),
+                'font_label' => $document->font->label(),
                 'tone_label' => $document->tone->label(),
                 'status' => $document->status->value,
                 'created_at' => $document->created_at?->toDateTimeString(),
@@ -160,7 +160,7 @@ class JobPostingController extends Controller
                 'type' => $document->type->value,
                 'type_label' => $document->type->label(),
                 'style_label' => $document->style->label(),
-                'layout_label' => $document->layout->label(),
+                'font_label' => $document->font->label(),
                 'tone_label' => $document->tone->label(),
                 'status' => $document->status->value,
                 'created_at' => $document->created_at?->toDateTimeString(),
@@ -189,14 +189,14 @@ class JobPostingController extends Controller
     {
         return [
             'documentStyles' => GeneratedDocumentController::styleOptions(),
-            'documentLayouts' => GeneratedDocumentController::layoutOptions(),
+            'documentFonts' => GeneratedDocumentController::fontOptions(),
             'documentTones' => collect(DocumentTone::cases())->map(fn (DocumentTone $tone) => [
                 'value' => $tone->value,
                 'label' => $tone->label(),
                 'description' => $tone->description(),
             ]),
             'defaultStyle' => $request->user()->documentStyle()->value,
-            'defaultLayout' => $request->user()->documentLayout()->value,
+            'defaultFont' => $request->user()->documentFont()->value,
             'preferredTone' => $request->user()->preferred_document_tone?->value,
             'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
                 'value' => $type->value,

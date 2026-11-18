@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\DocumentLayout;
+use App\Enums\DocumentFont;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
 use App\Services\Billing\Polar;
@@ -30,7 +30,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $linkedin_url
  * @property string|null $writing_sample
  * @property DocumentStyle|null $preferred_document_style
- * @property DocumentLayout|null $preferred_document_layout
+ * @property DocumentFont|null $preferred_document_font
  * @property DocumentTone|null $preferred_document_tone
  * @property string|null $polar_subscription_id
  * @property string|null $subscription_status
@@ -136,11 +136,11 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * The page layout a new document starts with: what the user last chose, else one assigned per user.
+     * The font a new document starts with: what the user last chose, else one assigned per user.
      */
-    public function documentLayout(): DocumentLayout
+    public function documentFont(): DocumentFont
     {
-        return $this->preferred_document_layout ?? DocumentLayout::defaultFor($this->id);
+        return $this->preferred_document_font ?? DocumentFont::defaultFor($this->id);
     }
 
     /**
@@ -154,7 +154,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'preferred_document_style' => DocumentStyle::class,
-            'preferred_document_layout' => DocumentLayout::class,
+            'preferred_document_font' => DocumentFont::class,
             'preferred_document_tone' => DocumentTone::class,
             'two_factor_confirmed_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
