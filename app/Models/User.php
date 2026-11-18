@@ -107,6 +107,18 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return ! Polar::enforced() || $this->billing_exempt || $this->hasActiveSubscription();
     }
 
+    /**
+     * Whether the user may create invitation links: only the verified admin account.
+     */
+    public function canInvite(): bool
+    {
+        $admin = config('app.admin_email');
+
+        return filled($admin)
+            && $this->hasVerifiedEmail()
+            && strcasecmp($this->email, $admin) === 0;
+    }
+
     public function hasActiveSubscription(): bool
     {
         return in_array($this->subscription_status, ['active', 'trialing'], true);

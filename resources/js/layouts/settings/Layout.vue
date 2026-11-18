@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -26,16 +27,27 @@ const sidebarNavItems: NavItem[] = [
         href: billing(),
     },
     {
-        title: 'Invitations',
-        href: invitations(),
-    },
-    {
         title: 'Appearance',
         href: editAppearance(),
     },
 ];
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+
+const page = usePage();
+const navItems = computed<NavItem[]>(() => {
+    const items = [...sidebarNavItems];
+
+    if (page.props.auth.canInvite) {
+        // Keep Invitations just before Appearance.
+        items.splice(items.length - 1, 0, {
+            title: 'Invitations',
+            href: invitations(),
+        });
+    }
+
+    return items;
+});
 </script>
 
 <template>
@@ -52,7 +64,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                     aria-label="Settings"
                 >
                     <Button
-                        v-for="item in sidebarNavItems"
+                        v-for="item in navItems"
                         :key="toUrl(item.href)"
                         variant="ghost"
                         :class="[

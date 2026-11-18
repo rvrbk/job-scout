@@ -1,36 +1,43 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { login } from '@/routes';
+import { store as signUp } from '@/routes/register';
 import { register } from '@/routes/invitations';
 
 defineOptions({
     layout: {
         title: 'Create your account',
-        description: 'You have been invited to join Job Scout',
+        description: 'Sign up for Job Scout',
     },
 });
 
 const props = defineProps<{
-    token: string;
-    inviter: string;
+    token?: string;
+    inviter?: string;
     passwordRules: string;
 }>();
+
+const formAction = props.token ? register.form(props.token) : signUp.form();
 </script>
 
 <template>
-    <Head title="Accept invitation" />
+    <Head :title="inviter ? 'Accept invitation' : 'Sign up'" />
 
-    <p class="mb-6 text-center text-sm text-muted-foreground">
+    <p
+        v-if="inviter"
+        class="mb-6 text-center text-sm text-muted-foreground"
+    >
         {{ inviter }} invited you. Choose a password to finish signing up.
     </p>
 
     <Form
-        v-bind="register.form(props.token)"
+        v-bind="formAction"
         :reset-on-success="['password', 'password_confirmation']"
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
@@ -97,6 +104,14 @@ const props = defineProps<{
                 <Spinner v-if="processing" />
                 Create account
             </Button>
+
+            <p
+                v-if="!inviter"
+                class="text-center text-sm text-muted-foreground"
+            >
+                Already have an account?
+                <Link :href="login()" class="underline">Log in</Link>
+            </p>
         </div>
     </Form>
 </template>

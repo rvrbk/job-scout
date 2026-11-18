@@ -25,15 +25,16 @@ class InvitationTest extends TestCase
         ];
     }
 
-    public function test_open_registration_is_not_available()
+    private function admin(): User
     {
-        $this->get('/register')->assertNotFound();
-        $this->post('/register', $this->details())->assertNotFound();
+        config(['app.admin_email' => 'admin@example.com']);
+
+        return User::factory()->create(['email' => 'admin@example.com']);
     }
 
     public function test_user_can_create_and_revoke_invitations()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)->get(route('invitations.index'))->assertOk();
         $this->actingAs($user)->post(route('invitations.store'))->assertRedirect(route('invitations.index'));
@@ -45,6 +46,25 @@ class InvitationTest extends TestCase
         $this->assertDatabaseCount('invitations', 0);
     }
 
+    public function test_only_the_admin_can_manage_invitations()
+    {
+        config(['app.admin_email' => 'admin@example.com']);
+        $other = User::factory()->create();
+        $unverifiedAdmin = User::factory()->unverified()->create(['email' => 'admin@example.com']);
+
+        $this->actingAs($other)->get(route('invitations.index'))->assertForbidden();
+        $this->actingAs($other)->post(route('invitations.store'))->assertForbidden();
+        $this->actingAs($unverifiedAdmin)->post(route('invitations.store'))->assertRedirect(route('verification.notice'));
+        $this->assertDatabaseCount('invitations', 0);
+    }
+
+    public function test_nobody_can_invite_when_no_admin_is_configured()
+    {
+        config(['app.admin_email' => null]);
+
+        $this->actingAs(User::factory()->create())->post(route('invitations.store'))->assertForbidden();
+    }
+
     public function test_guests_cannot_create_invitations()
     {
         $this->post(route('invitations.store'))->assertRedirect(route('login'));
@@ -54,14 +74,14 @@ class InvitationTest extends TestCase
     {
         $invitation = Invitation::generateFor(User::factory()->create());
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($this->admin())
             ->delete(route('invitations.destroy', $invitation))
             ->assertNotFound();
     }
 
     public function test_invited_person_can_register_with_a_password()
     {
-        $invitation = Invitation::generateFor(User::factory()->create());
+        $invitation = Invitation::generateFor($this->admin());
 
         $this->get(route('invitations.show', $invitation->token))->assertOk();
 
@@ -71,12 +91,13 @@ class InvitationTest extends TestCase
         $this->assertAuthenticated();
         $user = User::where('email', 'invited@example.com')->firstOrFail();
         $this->assertNotNull($user->email_verified_at);
+        $this->assertTrue($user->billing_exempt);
         $this->assertSame($user->id, $invitation->fresh()->accepted_by);
     }
 
     public function test_invitation_can_only_be_used_once()
     {
-        $invitation = Invitation::generateFor(User::factory()->create());
+        $invitation = Invitation::generateFor($this->admin());
 
         $this->post(route('invitations.register', $invitation->token), $this->details());
         auth()->logout();
@@ -89,7 +110,7 @@ class InvitationTest extends TestCase
 
     public function test_expired_and_unknown_invitations_are_rejected()
     {
-        $invitation = Invitation::generateFor(User::factory()->create());
+        $invitation = Invitation::generateFor($this->admin());
         $invitation->forceFill(['expires_at' => now()->subMinute()])->save();
 
         $this->get(route('invitations.show', $invitation->token))->assertNotFound();
@@ -98,7 +119,7 @@ class InvitationTest extends TestCase
 
     public function test_invalid_details_do_not_consume_the_invitation()
     {
-        $invitation = Invitation::generateFor(User::factory()->create());
+        $invitation = Invitation::generateFor($this->admin());
 
         $this->post(route('invitations.register', $invitation->token), $this->details(['password_confirmation' => 'different']))
             ->assertSessionHasErrors('password');

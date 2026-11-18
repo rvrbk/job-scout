@@ -16,6 +16,12 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | The only account that may create invitation links (which grant free access).
+    */
+
+    'admin_email' => env('ADMIN_EMAIL'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

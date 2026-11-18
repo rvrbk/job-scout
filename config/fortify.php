@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        // Registration is invitation-only and handled by InvitationController.
+        Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

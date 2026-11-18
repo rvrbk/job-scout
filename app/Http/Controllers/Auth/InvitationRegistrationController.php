@@ -44,8 +44,8 @@ class InvitationRegistrationController extends Controller
 
             $user = $creator->create($request->all());
 
-            // There is no mail yet, so the invitation stands in for email verification.
-            $user->forceFill(['email_verified_at' => now()])->save();
+            // The invitation vouches for the address, and grants free access.
+            $user->forceFill(['email_verified_at' => now(), 'billing_exempt' => true])->save();
 
             $invitation->forceFill([
                 'accepted_at' => now(),

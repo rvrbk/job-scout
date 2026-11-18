@@ -16,6 +16,8 @@ class InvitationController extends Controller
      */
     public function index(Request $request): Response
     {
+        abort_unless($request->user()->canInvite(), 403);
+
         $invitations = $request->user()->invitations()
             ->with('acceptedBy:id,name,email')
             ->latest()
@@ -39,6 +41,8 @@ class InvitationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->canInvite(), 403);
+
         Invitation::generateFor($request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation link created.')]);
@@ -51,6 +55,8 @@ class InvitationController extends Controller
      */
     public function destroy(Request $request, Invitation $invitation): RedirectResponse
     {
+        abort_unless($request->user()->canInvite(), 403);
+
         abort_unless($invitation->user_id === $request->user()->id, 404);
         abort_if($invitation->accepted_at !== null, 422, 'This invitation was already used.');
 

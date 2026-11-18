@@ -17,6 +17,7 @@ export type User = {
 
 export type Auth = {
     user: User;
+    canInvite: boolean;
 };
 
 export type Passkey = {
