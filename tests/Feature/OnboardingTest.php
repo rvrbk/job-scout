@@ -22,6 +22,14 @@ class OnboardingTest extends TestCase
         $this->actingAs($user)->get('/dashboard')->assertInertia(fn ($page) => $page->where('showTour', false));
     }
 
+    public function test_background_request_gets_no_content()
+    {
+        $user = User::factory()->create(['onboarded_at' => null]);
+
+        $this->actingAs($user)->postJson(route('onboarding.complete'))->assertNoContent();
+        $this->assertNotNull($user->fresh()->onboarded_at);
+    }
+
     public function test_completing_again_keeps_the_original_time()
     {
         $user = User::factory()->create(['onboarded_at' => now()->subDay()]);

@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class OnboardingController extends Controller
 {
     /**
      * Remember that the user has seen the welcome tour, so it does not open on its own again.
      */
-    public function __invoke(Request $request): RedirectResponse
+    public function __invoke(Request $request): RedirectResponse|Response
     {
         $user = $request->user();
 
@@ -18,6 +19,6 @@ class OnboardingController extends Controller
             $user->forceFill(['onboarded_at' => now()])->save();
         }
 
-        return back();
+        return $request->wantsJson() ? response()->noContent() : back();
     }
 }

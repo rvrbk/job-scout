@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
-import { computed, ref } from "vue";
+import { computed, onMounted } from "vue";
 import StackedBars from "@/components/dashboard/StackedBars.vue";
 import StatTile from "@/components/dashboard/StatTile.vue";
 import Heading from "@/components/Heading.vue";
-import OnboardingTour from "@/components/OnboardingTour.vue";
 import { Button } from "@/components/ui/button";
+import { useTour } from "@/composables/useTour";
 import { dashboard } from "@/routes";
 import { index as jobsIndex } from "@/routes/jobs";
 import { index as ledgerIndex } from "@/routes/ledger";
@@ -34,7 +34,14 @@ const props = defineProps<{
     lastSearchedAt: string | null;
 }>();
 
-const tourOpen = ref(props.showTour);
+const tour = useTour();
+
+onMounted(() => {
+    // Open on its own for new users, but never over a tour that is already under way.
+    if (props.showTour && !tour.open.value && !tour.paused.value) {
+        tour.start();
+    }
+});
 
 defineOptions({
     layout: {
@@ -91,12 +98,10 @@ const reviewNote = computed(() =>
                         : 'Where your ledger, job matches and drafts stand.'
                 "
             />
-            <Button variant="outline" size="sm" @click="tourOpen = true">
+            <Button variant="outline" size="sm" @click="tour.start()">
                 Take the tour
             </Button>
         </div>
-
-        <OnboardingTour v-model:open="tourOpen" />
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile

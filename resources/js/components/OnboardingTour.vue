@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, ArrowRight, X } from '@lucide/vue';
+import { computed, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,6 +9,7 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useTour } from '@/composables/useTour';
 import { index as billing } from '@/routes/billing';
 import {
     create as jobsCreate,
@@ -27,8 +28,25 @@ type Step = {
 
 const page = usePage();
 
-const open = defineModel<boolean>('open', { default: false });
-const current = ref(0);
+// A plain request, not an Inertia visit: a visit would cancel the navigation of a step's link.
+const markSeen = () => {
+    const token = document.cookie
+        .split('; ')
+        .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+        ?.slice('XSRF-TOKEN='.length);
+
+    fetch(complete().url, {
+        method: 'POST',
+        keepalive: true,
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            ...(token ? { 'X-XSRF-TOKEN': decodeURIComponent(token) } : {}),
+        },
+    }).catch(() => {});
+};
+
+const { open, current, paused, pause, resume, finish } = useTour();
 
 const steps = computed<Step[]>(() => [
     {
@@ -112,14 +130,21 @@ const go = (delta: number) => {
     );
 };
 
-watch(open, (isOpen, wasOpen) => {
+// Opening, pausing and finishing all count as having seen the tour.
+watch(open, (isOpen) => {
     if (isOpen) {
-        current.value = 0;
-    } else if (wasOpen) {
-        // Closing in any way (finish, skip, escape) counts as having seen the tour.
-        router.post(complete().url, {}, { preserveScroll: true, preserveState: true });
+        markSeen();
     }
 });
+
+const onOpenChange = (value: boolean) => {
+    if (value) {
+        open.value = true;
+    } else {
+        // Escape or a click outside keeps the place; "Skip" and "Start" end the tour.
+        pause();
+    }
+};
 
 const onKeydown = (event: KeyboardEvent) => {
     if (event.key === 'ArrowRight') {
@@ -131,7 +156,7 @@ const onKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <Dialog v-model:open="open">
+    <Dialog :open="open" @update:open="onOpenChange">
         <DialogContent class="sm:max-w-xl" @keydown="onKeydown">
             <div class="space-y-1">
                 <p class="text-xs font-medium text-muted-foreground">
@@ -149,7 +174,10 @@ const onKeydown = (event: KeyboardEvent) => {
             </ul>
 
             <Button v-if="step.cta" as-child variant="outline" class="w-fit">
-                <Link :href="step.cta.href" @click="open = false">
+                <Link
+                    :href="step.cta.href"
+                    @click="pause(Math.min(current + 1, steps.length - 1))"
+                >
                     {{ step.cta.label }} <ArrowRight />
                 </Link>
             </Button>
@@ -168,7 +196,7 @@ const onKeydown = (event: KeyboardEvent) => {
                     />
                 </div>
                 <div class="flex gap-2">
-                    <Button v-if="isFirst" variant="ghost" @click="open = false">
+                    <Button v-if="isFirst" variant="ghost" @click="finish()">
                         Skip
                     </Button>
                     <Button v-else variant="outline" @click="go(-1)">
@@ -177,9 +205,27 @@ const onKeydown = (event: KeyboardEvent) => {
                     <Button v-if="!isLast" @click="go(1)">
                         Next <ArrowRight />
                     </Button>
-                    <Button v-else @click="open = false">Start</Button>
+                    <Button v-else @click="finish()">Start</Button>
                 </div>
             </div>
         </DialogContent>
     </Dialog>
+
+    <div
+        v-if="paused && !open"
+        class="fixed right-4 bottom-4 z-50 flex items-center gap-1 rounded-full border bg-background p-1 shadow-lg"
+    >
+        <Button size="sm" class="rounded-full" @click="resume()">
+            Continue the tour · step {{ current + 1 }} of {{ steps.length }}
+        </Button>
+        <Button
+            size="icon"
+            variant="ghost"
+            class="size-8 rounded-full"
+            aria-label="End the tour"
+            @click="finish()"
+        >
+            <X />
+        </Button>
+    </div>
 </template>
