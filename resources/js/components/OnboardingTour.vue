@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, X } from '@lucide/vue';
 import { computed, watch } from 'vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -24,6 +25,8 @@ type Step = {
     description: string;
     points?: string[];
     cta?: { label: string; href: string };
+    /** Needs a subscription once billing is enforced. */
+    paid?: boolean;
 };
 
 const page = usePage();
@@ -86,6 +89,7 @@ const steps = computed<Step[]>(() => [
             'Save what you like, dismiss what you do not',
         ],
         cta: { label: 'Go to jobs', href: jobsIndex().url },
+        paid: true,
     },
     {
         title: 'Bring your own vacancy',
@@ -102,6 +106,7 @@ const steps = computed<Step[]>(() => [
             'No vacancy yet? Draft a general CV or cover letter from your ledger alone',
         ],
         cta: { label: 'Draft general documents', href: jobsDocuments().url },
+        paid: true,
     },
     {
         title: 'Review, approve, download',
@@ -159,9 +164,25 @@ const onKeydown = (event: KeyboardEvent) => {
     <Dialog :open="open" @update:open="onOpenChange">
         <DialogContent class="sm:max-w-xl" @keydown="onKeydown">
             <div class="space-y-1">
-                <p class="text-xs font-medium text-muted-foreground">
-                    Step {{ current + 1 }} of {{ steps.length }}
-                </p>
+                <div class="flex items-center gap-2">
+                    <p class="text-xs font-medium text-muted-foreground">
+                        Step {{ current + 1 }} of {{ steps.length }}
+                    </p>
+                    <Badge
+                        v-if="step.paid && page.props.billing.enforced"
+                        :variant="
+                            page.props.billing.subscribed
+                                ? 'secondary'
+                                : 'default'
+                        "
+                    >
+                        {{
+                            page.props.billing.subscribed
+                                ? 'Included in your plan'
+                                : 'Needs a subscription'
+                        }}
+                    </Badge>
+                </div>
                 <DialogTitle>{{ step.title }}</DialogTitle>
                 <DialogDescription>{{ step.description }}</DialogDescription>
             </div>
