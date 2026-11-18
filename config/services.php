@@ -47,6 +47,14 @@ return [
         'locale' => env('CAREERJET_LOCALE', 'nl_NL'),
     ],
 
+    'polar' => [
+        'token' => env('POLAR_ACCESS_TOKEN'),
+        'webhook_secret' => env('POLAR_WEBHOOK_SECRET'),
+        'product_id' => env('POLAR_PRODUCT_ID'),
+        // "production" or "sandbox".
+        'server' => env('POLAR_SERVER', 'production'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

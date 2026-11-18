@@ -9,6 +9,7 @@ use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
 use App\Http\Controllers\LedgerImportController;
+use App\Http\Controllers\PolarWebhookController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,8 @@ Route::middleware(['guest', 'throttle:10,1'])->group(function () {
     Route::get('invitations/{token}', [InvitationRegistrationController::class, 'show'])->name('invitations.show');
     Route::post('invitations/{token}', [InvitationRegistrationController::class, 'store'])->name('invitations.register');
 });
+
+Route::post('webhooks/polar', PolarWebhookController::class)->name('webhooks.polar');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -42,25 +45,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('jobs/add', [JobPostingController::class, 'create'])->name('jobs.create');
     Route::get('jobs/documents', [JobPostingController::class, 'documents'])->name('jobs.documents');
     Route::put('jobs/preferences', [JobSearchController::class, 'update'])->name('jobs.preferences.update');
-    Route::post('jobs/boards/suggest', [JobSearchController::class, 'suggestBoards'])->middleware('throttle:6,1')->name('jobs.boards.suggest');
-    Route::post('jobs/search', [JobSearchController::class, 'search'])->name('jobs.search');
+    Route::post('jobs/boards/suggest', [JobSearchController::class, 'suggestBoards'])->middleware(['subscribed', 'throttle:6,1'])->name('jobs.boards.suggest');
+    Route::post('jobs/search', [JobSearchController::class, 'search'])->middleware('subscribed')->name('jobs.search');
     Route::post('jobs/{jobPosting}/save', [JobSearchController::class, 'save'])->name('jobs.save');
     Route::post('jobs/{jobPosting}/dismiss', [JobSearchController::class, 'dismiss'])->name('jobs.dismiss');
     Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
     Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');
     Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
 
-    Route::post('jobs/{jobPosting}/documents', [GeneratedDocumentController::class, 'store'])->name('documents.store');
-    Route::post('documents', [GeneratedDocumentController::class, 'storeGeneral'])->name('documents.store-general');
+    Route::post('jobs/{jobPosting}/documents', [GeneratedDocumentController::class, 'store'])->middleware('subscribed')->name('documents.store');
+    Route::post('documents', [GeneratedDocumentController::class, 'storeGeneral'])->middleware('subscribed')->name('documents.store-general');
     Route::get('documents/{generatedDocument}', [GeneratedDocumentController::class, 'show'])->name('documents.show');
-    Route::post('documents/{generatedDocument}/retry', [GeneratedDocumentController::class, 'retry'])->name('documents.retry');
+    Route::post('documents/{generatedDocument}/retry', [GeneratedDocumentController::class, 'retry'])->middleware('subscribed')->name('documents.retry');
     Route::post('documents/{generatedDocument}/approve', [GeneratedDocumentController::class, 'approve'])->name('documents.approve');
     Route::get('documents/{generatedDocument}/export', [GeneratedDocumentController::class, 'export'])->name('documents.export');
     Route::get('documents/{generatedDocument}/pdf', [GeneratedDocumentController::class, 'exportPdf'])->name('documents.export-pdf');
     Route::delete('documents/{generatedDocument}', [GeneratedDocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::put('claims/{documentClaim}', [DocumentClaimController::class, 'update'])->name('claims.update');
-    Route::post('claims/{documentClaim}/regenerate', [DocumentClaimController::class, 'regenerate'])->name('claims.regenerate');
+    Route::post('claims/{documentClaim}/regenerate', [DocumentClaimController::class, 'regenerate'])->middleware('subscribed')->name('claims.regenerate');
     Route::delete('claims/{documentClaim}', [DocumentClaimController::class, 'destroy'])->name('claims.destroy');
 });
 

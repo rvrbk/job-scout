@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Billing\Polar;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,6 +45,10 @@ class HandleInertiaRequests extends Middleware
             'newJobs' => fn () => $request->user()
                 ? $request->user()->jobPostings()->newMatches($request->user()->jobSearchPreference?->min_score ?? 60)->count()
                 : 0,
+            'billing' => fn () => [
+                'enforced' => Polar::enforced(),
+                'subscribed' => $request->user()?->hasAccess() ?? false,
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

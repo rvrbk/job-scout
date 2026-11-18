@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\BillingController;
 use App\Http\Controllers\Settings\InvitationController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -27,6 +28,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/invitations', [InvitationController::class, 'index'])->name('invitations.index');
     Route::post('settings/invitations', [InvitationController::class, 'store'])->name('invitations.store');
     Route::delete('settings/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
+
+    Route::get('settings/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('settings/billing/checkout', [BillingController::class, 'checkout'])->middleware('throttle:6,1')->name('billing.checkout');
+    Route::post('settings/billing/portal', [BillingController::class, 'portal'])->middleware('throttle:6,1')->name('billing.portal');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });

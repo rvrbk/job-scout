@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
+use App\Services\Billing\Polar;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -29,6 +30,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $writing_sample
  * @property DocumentStyle|null $preferred_document_style
  * @property DocumentTone|null $preferred_document_tone
+ * @property string|null $polar_subscription_id
+ * @property string|null $subscription_status
+ * @property Carbon|null $subscription_ends_at
+ * @property bool $subscription_cancels
+ * @property bool $billing_exempt
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -94,6 +100,19 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Whether the user may use the paid features. Always true while billing is not configured.
+     */
+    public function hasAccess(): bool
+    {
+        return ! Polar::enforced() || $this->billing_exempt || $this->hasActiveSubscription();
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        return in_array($this->subscription_status, ['active', 'trialing'], true);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -106,6 +125,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'preferred_document_style' => DocumentStyle::class,
             'preferred_document_tone' => DocumentTone::class,
             'two_factor_confirmed_at' => 'datetime',
+            'subscription_ends_at' => 'datetime',
+            'subscription_cancels' => 'boolean',
+            'billing_exempt' => 'boolean',
         ];
     }
 }
