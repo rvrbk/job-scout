@@ -1,30 +1,27 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
-import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
-import DraftDocumentForm from '@/components/documents/DraftDocumentForm.vue';
-import Heading from '@/components/Heading.vue';
-import { show as showDocument } from '@/routes/documents';
-import { documents } from '@/routes/jobs';
-import type {
-    DocumentSummary,
-    Option,
-    StyleOption,
-    ToneOption,
-} from '@/types';
+import { Head, Link } from "@inertiajs/vue3";
+import GeneratedDocumentController from "@/actions/App/Http/Controllers/GeneratedDocumentController";
+import DocumentStatusBadge from "@/components/DocumentStatusBadge.vue";
+import DraftDocumentForm from "@/components/documents/DraftDocumentForm.vue";
+import Heading from "@/components/Heading.vue";
+import { show as showDocument } from "@/routes/documents";
+import { documents } from "@/routes/jobs";
+import type { DocumentSummary, Option, StyleOption, ToneOption } from "@/types";
 
 defineProps<{
     generalDocuments: DocumentSummary[];
     documentTypes: Option[];
     documentStyles: StyleOption[];
+    documentLayouts: StyleOption[];
     documentTones: ToneOption[];
-    preferredStyle: string | null;
+    defaultStyle: string;
+    defaultLayout: string;
     preferredTone: string | null;
 }>();
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Jobs', href: documents() }],
+        breadcrumbs: [{ title: "Jobs", href: documents() }],
     },
 });
 </script>
@@ -41,8 +38,10 @@ defineOptions({
             :action="GeneratedDocumentController.storeGeneral.form()"
             :document-types="documentTypes"
             :document-styles="documentStyles"
+            :document-layouts="documentLayouts"
             :document-tones="documentTones"
-            :preferred-style="preferredStyle"
+            :default-style="defaultStyle"
+            :default-layout="defaultLayout"
             :preferred-tone="preferredTone"
         />
         <ul v-if="generalDocuments.length" class="divide-y rounded-xl border">
@@ -56,8 +55,9 @@ defineOptions({
                             General {{ document.type_label }}
                         </p>
                         <p class="text-xs text-muted-foreground">
-                            {{ document.created_at }} · {{ document.style_label }} style ·
-                                    {{ document.tone_label }} tone
+                            {{ document.created_at }} ·
+                            {{ document.style_label }} style ·
+                            {{ document.tone_label }} tone
                         </p>
                     </div>
                     <DocumentStatusBadge :status="document.status" />

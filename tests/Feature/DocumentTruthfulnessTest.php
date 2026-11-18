@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ClaimKind;
 use App\Enums\ClaimStatus;
+use App\Enums\DocumentLayout;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -450,6 +451,20 @@ class DocumentTruthfulnessTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function letterOutput(): array
+    {
+        return [
+            'paragraphs' => [['sentences' => [
+                ['text' => 'I am writing to apply for the Senior Laravel Developer role.', 'kind' => 'framing', 'fact_ids' => []],
+                ['text' => 'I cut checkout API response times by 40% with query caching.', 'kind' => 'claim', 'fact_ids' => [$this->fact->id]],
+            ]]],
+            'gaps' => [],
+        ];
+    }
+
     private function allSupported(): \Closure
     {
         return fn (string $prompt) => ['results' => array_map(
@@ -458,27 +473,99 @@ class DocumentTruthfulnessTest extends TestCase
         )];
     }
 
-    public function test_the_chosen_style_is_stored_and_every_style_exports_a_pdf()
+    public function test_the_chosen_look_is_stored_and_every_layout_and_style_exports_a_pdf()
     {
         $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
 
-        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'bold']);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'bold', 'layout' => 'sidebar']);
 
         $document = GeneratedDocument::sole();
         $this->assertSame(DocumentStyle::Bold, $document->style);
+        $this->assertSame(DocumentLayout::Sidebar, $document->layout);
         $this->actingAs($this->user)->post(route('documents.approve', $document));
 
-        foreach (DocumentStyle::cases() as $style) {
-            $document->update(['style' => $style]);
+        foreach (DocumentLayout::cases() as $layout) {
+            foreach (DocumentStyle::cases() as $style) {
+                $document->update(['style' => $style, 'layout' => $layout]);
+
+                $pdf = $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk()->getContent();
+
+                $this->assertStringStartsWith('%PDF-', $pdf);
+
+                if ($dir = getenv('STYLE_PREVIEW_DIR')) {
+                    file_put_contents("{$dir}/cv-{$layout->value}-{$style->value}.pdf", $pdf);
+                }
+            }
+        }
+    }
+
+    public function test_a_cover_letter_exports_a_pdf_in_every_layout()
+    {
+        $this->fakeLlm([$this->letterOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cover_letter']);
+
+        $document = GeneratedDocument::sole();
+        $this->actingAs($this->user)->post(route('documents.approve', $document));
+
+        foreach (DocumentLayout::cases() as $layout) {
+            $document->update(['layout' => $layout]);
 
             $pdf = $this->actingAs($this->user)->get(route('documents.export-pdf', $document))->assertOk()->getContent();
 
             $this->assertStringStartsWith('%PDF-', $pdf);
 
             if ($dir = getenv('STYLE_PREVIEW_DIR')) {
-                file_put_contents("{$dir}/{$style->value}.pdf", $pdf);
+                file_put_contents("{$dir}/letter-{$layout->value}.pdf", $pdf);
             }
         }
+    }
+
+    public function test_a_user_gets_a_stable_look_assigned_until_they_choose_one()
+    {
+        $this->assertNull($this->user->preferred_document_layout);
+        $this->assertSame(DocumentLayout::defaultFor($this->user->id), $this->user->documentLayout());
+        $this->assertSame(DocumentStyle::defaultFor($this->user->id), $this->user->documentStyle());
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+
+        $document = GeneratedDocument::sole();
+        $this->assertSame($this->user->documentLayout(), $document->layout);
+        $this->assertSame($this->user->documentStyle(), $document->style);
+    }
+
+    public function test_the_assigned_looks_are_spread_over_every_layout_and_style()
+    {
+        $ids = range(1, 200);
+
+        $this->assertCount(count(DocumentLayout::cases()), collect($ids)->map(fn (int $id) => DocumentLayout::defaultFor($id))->unique());
+        $this->assertCount(count(DocumentStyle::cases()), collect($ids)->map(fn (int $id) => DocumentStyle::defaultFor($id))->unique());
+    }
+
+    public function test_the_look_of_an_existing_document_can_be_changed_without_losing_the_approval()
+    {
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+        $document = GeneratedDocument::sole();
+        $this->actingAs($this->user)->post(route('documents.approve', $document));
+
+        $this->actingAs($this->user)
+            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'layout' => 'compact'])
+            ->assertRedirect(route('documents.show', $document));
+
+        $document->refresh();
+        $this->assertSame(DocumentStyle::Minimal, $document->style);
+        $this->assertSame(DocumentLayout::Compact, $document->layout);
+        $this->assertSame(DocumentStatus::Approved, $document->status);
+        $this->assertSame(DocumentLayout::Compact, $this->user->fresh()->preferred_document_layout);
+
+        $this->actingAs($this->user)
+            ->patch(route('documents.update-look', $document), ['style' => 'minimal', 'layout' => 'nope'])
+            ->assertSessionHasErrors('layout');
+
+        $this->actingAs(User::factory()->create())
+            ->patch(route('documents.update-look', $document), ['style' => 'bold', 'layout' => 'classic'])
+            ->assertForbidden();
     }
 
     public function test_the_chosen_tone_is_stored_and_sent_to_the_model_and_defaults_to_professional()
@@ -502,15 +589,17 @@ class DocumentTruthfulnessTest extends TestCase
     public function test_the_last_chosen_style_and_tone_are_remembered_for_the_next_document()
     {
         $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
-            ->assertInertia(fn ($page) => $page->where('preferredTone', null)->where('preferredStyle', null));
+            ->assertInertia(fn ($page) => $page->where('preferredTone', null)
+                ->where('defaultStyle', $this->user->documentStyle()->value)
+                ->where('defaultLayout', $this->user->documentLayout()->value));
 
         $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
-        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'classic', 'tone' => 'warm']);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'minimal', 'layout' => 'compact', 'tone' => 'warm']);
 
         $this->assertSame(DocumentTone::Warm, $this->user->fresh()->preferred_document_tone);
 
         $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
-            ->assertInertia(fn ($page) => $page->where('preferredTone', 'warm')->where('preferredStyle', 'classic'));
+            ->assertInertia(fn ($page) => $page->where('preferredTone', 'warm')->where('defaultStyle', 'minimal')->where('defaultLayout', 'compact'));
     }
 
     public function test_the_writing_sample_is_sent_to_the_model_as_a_style_reference_only_when_set()
@@ -528,15 +617,16 @@ class DocumentTruthfulnessTest extends TestCase
         $this->assertStringContainsString('not a source of facts', $llm->calls[0]['prompt']);
     }
 
-    public function test_an_unknown_style_is_rejected_and_the_default_is_classic()
+    public function test_an_unknown_style_or_layout_is_rejected()
     {
         $this->actingAs($this->user)
             ->post(route('documents.store', $this->posting), ['type' => 'cv', 'style' => 'comic-sans'])
             ->assertSessionHasErrors('style');
 
-        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
-        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+        $this->actingAs($this->user)
+            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'layout' => 'masonry'])
+            ->assertSessionHasErrors('layout');
 
-        $this->assertSame(DocumentStyle::Classic, GeneratedDocument::sole()->style);
+        $this->assertSame(0, GeneratedDocument::count());
     }
 }

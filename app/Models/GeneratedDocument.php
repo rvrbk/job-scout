@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ClaimStatus;
+use App\Enums\DocumentLayout;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -21,13 +22,14 @@ use Illuminate\Support\Carbon;
  * @property int|null $job_posting_id
  * @property DocumentType $type
  * @property DocumentStyle $style
+ * @property DocumentLayout $layout
  * @property DocumentTone $tone
  * @property DocumentStatus $status
  * @property list<array{requirement: string, note: string}>|null $gaps
  * @property string|null $error
  * @property Carbon|null $approved_at
  */
-#[Fillable(['job_posting_id', 'type', 'style', 'tone', 'status', 'gaps', 'error', 'approved_at'])]
+#[Fillable(['job_posting_id', 'type', 'style', 'layout', 'tone', 'status', 'gaps', 'error', 'approved_at'])]
 class GeneratedDocument extends Model
 {
     /** @use HasFactory<GeneratedDocumentFactory> */
@@ -98,6 +100,7 @@ class GeneratedDocument extends Model
         return [
             'type' => DocumentType::class,
             'style' => DocumentStyle::class,
+            'layout' => DocumentLayout::class,
             'tone' => DocumentTone::class,
             'status' => DocumentStatus::class,
             'gaps' => 'array',

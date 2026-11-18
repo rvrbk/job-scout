@@ -58,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('jobs/{jobPosting}/documents', [GeneratedDocumentController::class, 'store'])->middleware('subscribed')->name('documents.store');
     Route::post('documents', [GeneratedDocumentController::class, 'storeGeneral'])->middleware('subscribed')->name('documents.store-general');
     Route::get('documents/{generatedDocument}', [GeneratedDocumentController::class, 'show'])->name('documents.show');
+    Route::patch('documents/{generatedDocument}/look', [GeneratedDocumentController::class, 'updateLook'])->name('documents.update-look');
     Route::post('documents/{generatedDocument}/retry', [GeneratedDocumentController::class, 'retry'])->middleware('subscribed')->name('documents.retry');
     Route::post('documents/{generatedDocument}/approve', [GeneratedDocumentController::class, 'approve'])->name('documents.approve');
     Route::get('documents/{generatedDocument}/export', [GeneratedDocumentController::class, 'export'])->name('documents.export');

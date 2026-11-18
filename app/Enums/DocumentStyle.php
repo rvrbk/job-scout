@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 /**
- * How a CV or cover letter looks when exported as PDF. Only the typesetting differs, never the content.
+ * The colours and type of a CV or cover letter exported as PDF (the page layout is a DocumentLayout). Only the typesetting differs, never the content.
  */
 enum DocumentStyle: string
 {
@@ -30,5 +30,15 @@ enum DocumentStyle: string
             self::Minimal => __('Plain black and grey, no decoration.'),
             self::Bold => __('Dark header band with an amber accent.'),
         };
+    }
+
+    /**
+     * The style a user gets until they choose one: stable per user, spread evenly over all styles.
+     */
+    public static function defaultFor(int $userId): self
+    {
+        $cases = self::cases();
+
+        return $cases[crc32("style:{$userId}") % count($cases)];
     }
 }

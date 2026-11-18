@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentLayout;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -46,6 +47,7 @@ class GeneratedDocumentController extends Controller
         $validated = $request->validate([
             'type' => ['required', Rule::enum(DocumentType::class)],
             'style' => ['nullable', Rule::enum(DocumentStyle::class)],
+            'layout' => ['nullable', Rule::enum(DocumentLayout::class)],
             'tone' => ['nullable', Rule::enum(DocumentTone::class)],
         ]);
 
@@ -55,12 +57,15 @@ class GeneratedDocumentController extends Controller
             ]);
         }
 
-        $style = DocumentStyle::tryFrom($validated['style'] ?? '') ?? DocumentStyle::Classic;
+        $user = $request->user();
+        $style = DocumentStyle::tryFrom($validated['style'] ?? '') ?? $user->documentStyle();
+        $layout = DocumentLayout::tryFrom($validated['layout'] ?? '') ?? $user->documentLayout();
         $tone = DocumentTone::tryFrom($validated['tone'] ?? '') ?? DocumentTone::Professional;
 
-        // Remember the choice so the next document starts from the same style and tone.
-        $request->user()->forceFill([
+        // Remember the choice so the next document starts from the same look and tone.
+        $user->forceFill([
             'preferred_document_style' => $style,
+            'preferred_document_layout' => $layout,
             'preferred_document_tone' => $tone,
         ])->save();
 
@@ -68,6 +73,7 @@ class GeneratedDocumentController extends Controller
             'job_posting_id' => $jobPosting?->id,
             'type' => $validated['type'],
             'style' => $style,
+            'layout' => $layout,
             'tone' => $tone,
             'status' => DocumentStatus::Generating,
         ]);
@@ -77,6 +83,30 @@ class GeneratedDocumentController extends Controller
         return to_route('documents.show', $document);
     }
 
+    /**
+     * @return list<array{value: string, label: string, description: string}>
+     */
+    public static function styleOptions(): array
+    {
+        return collect(DocumentStyle::cases())->map(fn (DocumentStyle $style) => [
+            'value' => $style->value,
+            'label' => $style->label(),
+            'description' => $style->description(),
+        ])->all();
+    }
+
+    /**
+     * @return list<array{value: string, label: string, description: string}>
+     */
+    public static function layoutOptions(): array
+    {
+        return collect(DocumentLayout::cases())->map(fn (DocumentLayout $layout) => [
+            'value' => $layout->value,
+            'label' => $layout->label(),
+            'description' => $layout->description(),
+        ])->all();
+    }
+
     public function show(GeneratedDocument $generatedDocument, DocumentRenderer $renderer): Response
     {
         Gate::authorize('view', $generatedDocument);
@@ -84,11 +114,16 @@ class GeneratedDocumentController extends Controller
         $generatedDocument->load(['jobPosting', 'claims.facts', 'claims.entry']);
 
         return Inertia::render('documents/Show', [
+            'documentStyles' => $this->styleOptions(),
+            'documentLayouts' => $this->layoutOptions(),
             'document' => [
                 'id' => $generatedDocument->id,
                 'type' => $generatedDocument->type->value,
                 'type_label' => $generatedDocument->type->label(),
+                'style' => $generatedDocument->style->value,
+                'layout' => $generatedDocument->layout->value,
                 'style_label' => $generatedDocument->style->label(),
+                'layout_label' => $generatedDocument->layout->label(),
                 'tone_label' => $generatedDocument->tone->label(),
                 'status' => $generatedDocument->status->value,
                 'is_processing' => $generatedDocument->status->isProcessing(),
@@ -118,6 +153,31 @@ class GeneratedDocumentController extends Controller
                 'markdown' => $generatedDocument->status->isProcessing() ? null : $renderer->toMarkdown($generatedDocument),
             ],
         ]);
+    }
+
+    /**
+     * Typeset an existing document differently. Only the PDF changes, so there is nothing to redraft or re-verify
+     * and an approval stays. The new look is also what the next document starts from.
+     */
+    public function updateLook(Request $request, GeneratedDocument $generatedDocument): RedirectResponse
+    {
+        Gate::authorize('update', $generatedDocument);
+
+        $validated = $request->validate([
+            'style' => ['required', Rule::enum(DocumentStyle::class)],
+            'layout' => ['required', Rule::enum(DocumentLayout::class)],
+        ]);
+
+        $generatedDocument->update($validated);
+
+        $request->user()->forceFill([
+            'preferred_document_style' => $validated['style'],
+            'preferred_document_layout' => $validated['layout'],
+        ])->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Layout updated.')]);
+
+        return to_route('documents.show', $generatedDocument);
     }
 
     /**

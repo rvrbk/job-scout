@@ -1,3 +1,14 @@
+@if (($layout ?? 'classic') === 'sidebar')
+    {{-- Cover letter in the sidebar layout: the name on the left, the contact details on the right. --}}
+    <table class="header header-split"><tr>
+        <td class="header-name"><h1>{{ $name }}</h1></td>
+        <td class="header-contact contact">
+            @foreach ($contact as $part)<div>{{ $part }}</div>@endforeach
+            @foreach ($links as $link)<div><a href="{{ $link['url'] }}">{{ $link['label'] }}</a></div>@endforeach
+        </td>
+    </tr></table>
+    <div class="rule"></div>
+@else
 <div class="header">
     <h1>{{ $name }}</h1>
     @if (count($contact) || count($links))
@@ -12,3 +23,4 @@
     @endif
 </div>
 <div class="rule"></div>
+@endif

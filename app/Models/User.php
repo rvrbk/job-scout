@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentLayout;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
 use App\Services\Billing\Polar;
@@ -29,6 +30,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $linkedin_url
  * @property string|null $writing_sample
  * @property DocumentStyle|null $preferred_document_style
+ * @property DocumentLayout|null $preferred_document_layout
  * @property DocumentTone|null $preferred_document_tone
  * @property string|null $polar_subscription_id
  * @property string|null $subscription_status
@@ -126,6 +128,22 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * The colours and type a new document starts with: what the user last chose, else one assigned per user.
+     */
+    public function documentStyle(): DocumentStyle
+    {
+        return $this->preferred_document_style ?? DocumentStyle::defaultFor($this->id);
+    }
+
+    /**
+     * The page layout a new document starts with: what the user last chose, else one assigned per user.
+     */
+    public function documentLayout(): DocumentLayout
+    {
+        return $this->preferred_document_layout ?? DocumentLayout::defaultFor($this->id);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -136,6 +154,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'preferred_document_style' => DocumentStyle::class,
+            'preferred_document_layout' => DocumentLayout::class,
             'preferred_document_tone' => DocumentTone::class,
             'two_factor_confirmed_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
