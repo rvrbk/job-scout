@@ -19,6 +19,15 @@ class SeoTest extends TestCase
             ->assertSee('General CV and cover letter drafted from the ledger without a job', false);
     }
 
+    public function test_landing_page_has_faq_and_howto_structured_data(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('"@type":"FAQPage"', false)
+            ->assertSee('"@type":"HowTo"', false)
+            ->assertSee('Does Job Scout apply to jobs for me?', false);
+    }
+
     public function test_other_pages_are_noindex_without_structured_data(): void
     {
         $this->get('/login')
@@ -31,6 +40,6 @@ class SeoTest extends TestCase
     {
         $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: '.route('sitemap'), false);
         $this->get('/sitemap.xml')->assertOk()->assertSee('<loc>'.route('home').'</loc>', false);
-        $this->get('/llms.txt')->assertOk()->assertSee('# Job Scout')->assertSee('pastes or links to', false)->assertSee('general document', false);
+        $this->get('/llms.txt')->assertOk()->assertSee('# Job Scout')->assertSee('pastes or links to', false)->assertSee('general document', false)->assertSee('Frequently asked questions', false)->assertSee('Typical workflow', false);
     }
 }

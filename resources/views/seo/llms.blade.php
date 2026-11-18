@@ -9,8 +9,20 @@
 - **Ledger**: users build a ledger of what they have actually done (roles, projects, education), broken down into facts. Only facts the user confirms can be used in an application. An existing CV can be imported as unconfirmed entries.
 - **Job search**: postings are gathered from several sources and scored against the ledger, with the reason for the score and the gaps.
 - **Your own vacancies**: a user can paste the text of a vacancy or link to it. The title, company and description are read from the text or page, and the vacancy can be saved, searched and sorted by date.
-- **Drafting**: CVs and cover letters can be drafted for a specific vacancy, or as a general document from the ledger alone. The user picks one of four PDF styles and a tone, and can supply a sample of their own writing so the wording matches their voice. Each sentence is checked against the facts it cites before the document can be approved and downloaded as PDF or Markdown.
+- **Drafting**: CVs and cover letters can be drafted for a specific vacancy, or as a general document from the ledger alone. The user picks a colour style, a font and a tone, and can supply a sample of their own writing so the wording matches their voice. Each sentence is checked against the facts it cites before the document can be approved and downloaded as PDF or Markdown.
 - **Truthfulness**: the writing sample only influences wording. It is never a source of facts, and a sentence no confirmed fact supports is flagged for the user instead of being exported.
+
+## Frequently asked questions
+
+@foreach (config('landing.faqs') as $faq)
+- **{{ $faq['question'] }}** {{ $faq['answer'] }}
+@endforeach
+
+## Typical workflow
+
+@foreach (config('landing.steps') as $i => $step)
+{{ $i + 1 }}. **{{ $step['title'] }}**: {{ $step['description'] }}
+@endforeach
 
 ## Pages
 

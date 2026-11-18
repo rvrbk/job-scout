@@ -14,7 +14,10 @@ use App\Http\Controllers\PolarWebhookController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::inertia('/', 'Welcome', [
+    'steps' => config('landing.steps'),
+    'faqs' => config('landing.faqs'),
+])->name('home');
 
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
