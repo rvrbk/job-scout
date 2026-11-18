@@ -9,6 +9,7 @@ use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
 use App\Http\Controllers\LedgerImportController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PolarWebhookController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::post('webhooks/polar', PolarWebhookController::class)->name('webhooks.pol
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::post('onboarding/complete', OnboardingController::class)->name('onboarding.complete');
 
     Route::get('ledger', [LedgerEntryController::class, 'index'])->name('ledger.index');
     Route::post('ledger/import', [LedgerImportController::class, 'store'])->name('ledger.import');

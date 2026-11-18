@@ -26,6 +26,7 @@ class DashboardController extends Controller
             'ledger' => $this->ledger($user),
             'jobs' => $this->jobs($user, $minScore),
             'documents' => $this->documents($user),
+            'showTour' => $user->onboarded_at === null,
             'lastSearchedAt' => $user->jobSearchPreference?->last_searched_at?->toDateTimeString(),
         ]);
     }

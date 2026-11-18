@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import StackedBars from "@/components/dashboard/StackedBars.vue";
 import StatTile from "@/components/dashboard/StatTile.vue";
 import Heading from "@/components/Heading.vue";
+import OnboardingTour from "@/components/OnboardingTour.vue";
+import { Button } from "@/components/ui/button";
 import { dashboard } from "@/routes";
 import { index as jobsIndex } from "@/routes/jobs";
 import { index as ledgerIndex } from "@/routes/ledger";
@@ -28,8 +30,11 @@ const props = defineProps<{
         days: number;
     };
     documents: { total: number; approved: number; to_review: number };
+    showTour: boolean;
     lastSearchedAt: string | null;
 }>();
+
+const tourOpen = ref(props.showTour);
 
 defineOptions({
     layout: {
@@ -77,14 +82,21 @@ const reviewNote = computed(() =>
     <Head title="Dashboard" />
 
     <div class="flex flex-1 flex-col gap-6 p-4">
-        <Heading
-            title="Dashboard"
-            :description="
-                lastSearchedAt
-                    ? `Last job search ${lastSearchedAt}.`
-                    : 'Where your ledger, job matches and drafts stand.'
-            "
-        />
+        <div class="flex items-start justify-between gap-4">
+            <Heading
+                title="Dashboard"
+                :description="
+                    lastSearchedAt
+                        ? `Last job search ${lastSearchedAt}.`
+                        : 'Where your ledger, job matches and drafts stand.'
+                "
+            />
+            <Button variant="outline" size="sm" @click="tourOpen = true">
+                Take the tour
+            </Button>
+        </div>
+
+        <OnboardingTour v-model:open="tourOpen" />
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile

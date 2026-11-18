@@ -36,6 +36,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property bool $subscription_cancels
  * @property bool $billing_exempt
  * @property Carbon|null $email_verified_at
+ * @property Carbon|null $onboarded_at
  * @property string $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -140,6 +141,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'subscription_ends_at' => 'datetime',
             'subscription_cancels' => 'boolean',
             'billing_exempt' => 'boolean',
+            'onboarded_at' => 'datetime',
         ];
     }
 }

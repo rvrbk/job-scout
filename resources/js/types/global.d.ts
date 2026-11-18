@@ -21,6 +21,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             newJobs: number;
+            billing: { enforced: boolean; subscribed: boolean };
             [key: string]: unknown;
         };
     }
