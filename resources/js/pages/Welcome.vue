@@ -77,6 +77,14 @@ defineProps<{
                     and cover letter where every claim traces back to a fact you
                     confirmed.
                 </p>
+                <p class="text-muted-foreground">
+                    You write down what you have actually done, and confirm each
+                    fact. Job Scout then finds vacancies, or reads one you paste
+                    or link, and shows how well you fit. It drafts a CV or cover
+                    letter from your confirmed facts only, checks every sentence
+                    against the fact behind it, and flags anything it cannot
+                    back up. You review, approve and download it as a PDF.
+                </p>
                 <div
                     v-if="!$page.props.auth.user"
                     class="flex flex-wrap gap-3 pt-2"
