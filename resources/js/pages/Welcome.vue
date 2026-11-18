@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
 import LandingDemo from "@/components/LandingDemo.vue";
-import LandingTour from "@/components/LandingTour.vue";
 import AppLogoIcon from "@/components/AppLogoIcon.vue";
 import PlatformCredit from "@/components/PlatformCredit.vue";
 import { Button } from "@/components/ui/button";
@@ -88,9 +87,6 @@ defineProps<{
                     <Button as-child size="lg" variant="outline">
                         <Link :href="login()">Log in</Link>
                     </Button>
-                    <LandingTour>
-                        <Button size="lg" variant="outline">Take a tour</Button>
-                    </LandingTour>
                 </div>
             </section>
 
@@ -192,9 +188,6 @@ defineProps<{
                     <Button as-child size="lg">
                         <Link :href="register()">Sign up</Link>
                     </Button>
-                    <LandingTour>
-                        <Button size="lg" variant="outline">Take a tour</Button>
-                    </LandingTour>
                 </div>
             </section>
         </main>
