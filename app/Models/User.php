@@ -122,6 +122,15 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             && strcasecmp($this->email, $admin) === 0;
     }
 
+    /**
+     * Whether the user may start a job search by hand. Searches cost model calls, so only the admin can;
+     * everyone else gets the scheduled ones.
+     */
+    public function canSearchManually(): bool
+    {
+        return $this->canInvite();
+    }
+
     public function hasActiveSubscription(): bool
     {
         return in_array($this->subscription_status, ['active', 'trialing'], true);

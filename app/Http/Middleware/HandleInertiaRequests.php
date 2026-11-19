@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'canInvite' => $request->user()?->canInvite() ?? false,
+                'canSearch' => $request->user()?->canSearchManually() ?? false,
             ],
             'newJobs' => fn () => $request->user()
                 ? $request->user()->jobPostings()->newMatches($request->user()->jobSearchPreference?->min_score ?? 60)->count()

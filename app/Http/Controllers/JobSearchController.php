@@ -38,6 +38,8 @@ class JobSearchController extends Controller
 
     public function search(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->canSearchManually(), 403);
+
         if (! LedgerSnapshot::forUser($request->user())->hasFacts()) {
             Inertia::flash('toast', ['type' => 'error', 'message' => __('Confirm some facts in your ledger first.')]);
 

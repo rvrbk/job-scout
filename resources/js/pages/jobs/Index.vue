@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage, usePoll } from '@inertiajs/vue3';
 import { Bookmark, ExternalLink, Search, X } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
@@ -17,6 +17,9 @@ const props = defineProps<{
     preferences: JobSearchPreferences;
     searching: boolean;
 }>();
+
+const page = usePage();
+const canSearch = computed(() => page.props.auth.canSearch);
 
 // A search runs in the background after the click, so keep checking until it is done.
 const { start, stop } = usePoll(
@@ -57,10 +60,11 @@ defineOptions({
                     :description="
                         lastSearchedAt
                             ? `Jobs scored against your confirmed ledger. Last searched ${lastSearchedAt}.`
-                            : 'Jobs scored against your confirmed ledger. Run a search to find some.'
+                            : 'Jobs scored against your confirmed ledger. New jobs are searched for twice a day.'
                     "
                 />
                 <Form
+                    v-if="canSearch"
                     v-bind="JobSearchController.search.form()"
                     #default="{ processing }"
                 >
@@ -88,7 +92,7 @@ defineOptions({
                 v-if="found.length === 0"
                 class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
             >
-                No matches yet. A search checks every source, scores new jobs
+                No matches yet. The twice-daily search checks every source, scores new jobs
                 against your ledger, and keeps those at or above
                 {{ preferences.min_score }}.
             </p>

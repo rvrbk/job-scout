@@ -295,6 +295,7 @@ class JobSearchTest extends TestCase
         Http::fake();
         $user = User::factory()->create();
 
+        config(['app.admin_email' => $user->email]);
         $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
 
         Http::assertNothingSent();
@@ -315,6 +316,7 @@ class JobSearchTest extends TestCase
         $this->fakeLlm();
         $user = $this->userWithLedger();
 
+        config(['app.admin_email' => $user->email]);
         $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
 
         $this->assertSame(['Laravel Developer'], $user->jobPostings()->pluck('title')->all());
@@ -328,6 +330,7 @@ class JobSearchTest extends TestCase
         $lock = Cache::lock(RunJobSearch::lockKey($user), 60);
         $lock->get();
 
+        config(['app.admin_email' => $user->email]);
         $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
 
         Http::assertNothingSent();
@@ -352,6 +355,14 @@ class JobSearchTest extends TestCase
         $this->assertNull($busy->jobSearchPreference->refresh()->last_searched_at);
         $this->assertNull($noPreferences->jobSearchPreference);
         $lock->release();
+    }
+
+    public function test_only_the_admin_can_start_a_search_by_hand()
+    {
+        $user = $this->userWithLedger();
+        config(['app.admin_email' => 'someone-else@example.com']);
+
+        $this->actingAs($user)->post(route('jobs.search'))->assertForbidden();
     }
 
     public function test_the_search_is_scheduled_twice_a_day()

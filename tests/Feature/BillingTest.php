@@ -42,6 +42,7 @@ class BillingTest extends TestCase
     {
         $user = User::factory()->create();
 
+        config(['app.admin_email' => $user->email]);
         $this->actingAs($user)->post(route('jobs.search'))->assertRedirect();
         $this->assertTrue($user->hasAccess());
     }
