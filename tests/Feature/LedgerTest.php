@@ -123,6 +123,25 @@ class LedgerTest extends TestCase
         $this->assertNotNull($fact->fresh()->confirmed_at);
     }
 
+    public function test_an_entry_can_be_confirmed_with_one_click_by_its_owner_only()
+    {
+        $entry = LedgerEntry::factory()->create(['confirmed_at' => null]);
+
+        $this->actingAs(User::factory()->create())->post(route('ledger.confirm', $entry))->assertForbidden();
+
+        $this->actingAs($entry->user)->post(route('ledger.confirm', $entry))->assertRedirect(route('ledger.index'));
+        $this->assertNotNull($entry->fresh()->confirmed_at);
+    }
+
+    public function test_adding_a_fact_sends_the_user_to_it()
+    {
+        $entry = LedgerEntry::factory()->create();
+
+        $response = $this->actingAs($entry->user)->post(route('facts.store', $entry), ['statement' => 'Cut deploy time in half.']);
+
+        $response->assertRedirect(route('ledger.index', ['fact' => $entry->facts()->sole()->id]));
+    }
+
     public function test_facts_can_be_added_updated_and_deleted()
     {
         $entry = LedgerEntry::factory()->create();

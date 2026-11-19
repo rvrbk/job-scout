@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePoll } from "@inertiajs/vue3";
+import { Form, Head, Link, usePage, usePoll } from "@inertiajs/vue3";
 import {
     Check,
     ExternalLink,
     Pencil,
     Plus,
+    Search,
     Sparkles,
     Trash2,
     Upload,
 } from "@lucide/vue";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import LedgerEntryController from "@/actions/App/Http/Controllers/LedgerEntryController";
 import LedgerImportController from "@/actions/App/Http/Controllers/LedgerImportController";
 import LedgerFactController from "@/actions/App/Http/Controllers/LedgerFactController";
@@ -19,6 +20,7 @@ import LedgerEntryDialog from "@/components/ledger/LedgerEntryDialog.vue";
 import LedgerFactForm from "@/components/ledger/LedgerFactForm.vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
@@ -63,6 +65,62 @@ const confirmDelete = (message: string) => window.confirm(message);
 
 const typeLabel = (value: string) =>
     props.types.find((type) => type.value === value)?.label ?? value;
+
+const search = ref("");
+const highlightedFactId = ref<number | null>(null);
+
+// Entries that match the search, each with the facts to show: all of them when the entry itself matches, else just the matching ones.
+const visibleEntries = computed(() => {
+    const term = search.value.trim().toLowerCase();
+
+    if (term === "") {
+        return props.entries;
+    }
+
+    const has = (text: string | null | undefined) =>
+        (text ?? "").toLowerCase().includes(term);
+
+    return props.entries.flatMap((entry) => {
+        const entryMatches =
+            [
+                entry.title,
+                entry.organization,
+                entry.location,
+                entry.period,
+            ].some(has) || entry.skills.some(has);
+        const facts = entry.facts.filter((fact) => has(fact.statement));
+
+        return entryMatches || facts.length
+            ? [{ ...entry, facts: entryMatches ? entry.facts : facts }]
+            : [];
+    });
+});
+
+// After adding a fact the server redirects with ?fact=<id>: show it, scroll to it and mark it for a moment.
+const page = usePage();
+
+watch(
+    () => page.url,
+    async (url) => {
+        const id = Number(
+            new URL(url, window.location.origin).searchParams.get("fact"),
+        );
+
+        if (!id) {
+            return;
+        }
+
+        search.value = "";
+        highlightedFactId.value = id;
+        window.history.replaceState(window.history.state, "", index().url);
+        await nextTick();
+        document
+            .getElementById(`fact-${id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => (highlightedFactId.value = null), 3000);
+    },
+    { immediate: true, flush: "post" },
+);
 
 const confirmedFactCount = computed(
     () =>
@@ -232,8 +290,26 @@ const confirmedFactCount = computed(
             then add specific facts about what you did there.
         </div>
 
+        <div v-if="entries.length > 0" class="relative">
+            <Search
+                class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+                v-model="search"
+                type="search"
+                placeholder="Search entries, skills and facts"
+                class="pl-9"
+            />
+        </div>
+        <p
+            v-if="entries.length > 0 && visibleEntries.length === 0"
+            class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
+        >
+            Nothing in your ledger matches "{{ search }}".
+        </p>
+
         <article
-            v-for="entry in entries"
+            v-for="entry in visibleEntries"
             :key="entry.id"
             class="space-y-4 rounded-xl border p-4"
         >
@@ -271,6 +347,15 @@ const confirmedFactCount = computed(
                     </div>
                 </div>
                 <div class="flex items-center gap-1">
+                    <Link
+                        v-if="!entry.confirmed"
+                        :href="LedgerEntryController.confirm(entry.id)"
+                        as="button"
+                        preserve-scroll
+                        class="p-2 text-muted-foreground hover:text-foreground"
+                        title="Confirm entry"
+                        ><Check class="size-4"
+                    /></Link>
                     <a
                         v-if="entry.evidence_url"
                         :href="entry.evidence_url"
@@ -303,7 +388,15 @@ const confirmedFactCount = computed(
             </header>
 
             <ul class="space-y-2">
-                <li v-for="fact in entry.facts" :key="fact.id">
+                <li
+                    v-for="fact in entry.facts"
+                    :id="`fact-${fact.id}`"
+                    :key="fact.id"
+                    class="rounded-lg transition-shadow"
+                    :class="
+                        highlightedFactId === fact.id && 'ring-2 ring-primary'
+                    "
+                >
                     <LedgerFactForm
                         v-if="editingFactId === fact.id"
                         :entry-id="entry.id"
@@ -321,6 +414,9 @@ const confirmedFactCount = computed(
                                     v-if="!fact.confirmed"
                                     variant="destructive"
                                     >Not confirmed</Badge
+                                >
+                                <Badge v-else variant="secondary"
+                                    >Confirmed</Badge
                                 >
                                 <a
                                     v-if="fact.evidence_url"

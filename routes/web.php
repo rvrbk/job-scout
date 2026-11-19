@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('ledger/import', [LedgerImportController::class, 'store'])->name('ledger.import');
     Route::post('ledger/note', [LedgerImportController::class, 'note'])->name('ledger.note');
     Route::post('ledger', [LedgerEntryController::class, 'store'])->name('ledger.store');
+    Route::post('ledger/{ledgerEntry}/confirm', [LedgerEntryController::class, 'confirm'])->name('ledger.confirm');
     Route::put('ledger/{ledgerEntry}', [LedgerEntryController::class, 'update'])->name('ledger.update');
     Route::delete('ledger/{ledgerEntry}', [LedgerEntryController::class, 'destroy'])->name('ledger.destroy');
 

@@ -84,6 +84,21 @@ class LedgerEntryController extends Controller
         return to_route('ledger.index');
     }
 
+    public function confirm(Request $request, LedgerEntry $ledgerEntry): RedirectResponse
+    {
+        Gate::authorize('update', $ledgerEntry);
+
+        $ledgerEntry->update(['confirmed_at' => $ledgerEntry->confirmed_at ?? now()]);
+
+        $started = RunFirstSearch::startFor($request->user());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $started
+            ? __('Entry confirmed. Your first job search has started; matches appear under Jobs in a few minutes.')
+            : __('Entry confirmed.')]);
+
+        return to_route('ledger.index');
+    }
+
     public function destroy(LedgerEntry $ledgerEntry): RedirectResponse
     {
         Gate::authorize('delete', $ledgerEntry);

@@ -16,11 +16,12 @@ class LedgerFactController extends Controller
     {
         Gate::authorize('update', $ledgerEntry);
 
-        $ledgerEntry->facts()->create($request->factAttributes());
+        $fact = $ledgerEntry->facts()->create($request->factAttributes());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Fact added.')]);
 
-        return to_route('ledger.index');
+        // The page scrolls to this fact and highlights it.
+        return to_route('ledger.index', ['fact' => $fact->id]);
     }
 
     public function update(LedgerFactRequest $request, LedgerFact $ledgerFact): RedirectResponse
