@@ -16,6 +16,7 @@ import LedgerImportController from "@/actions/App/Http/Controllers/LedgerImportC
 import LedgerFactController from "@/actions/App/Http/Controllers/LedgerFactController";
 import Heading from "@/components/Heading.vue";
 import InputError from "@/components/InputError.vue";
+import LedgerGuide from "@/components/LedgerGuide.vue";
 import LedgerEntryDialog from "@/components/ledger/LedgerEntryDialog.vue";
 import LedgerFactForm from "@/components/ledger/LedgerFactForm.vue";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +123,10 @@ watch(
     { immediate: true, flush: "post" },
 );
 
+const totalFactCount = computed(
+    () => props.entries.flatMap((entry) => entry.facts).length,
+);
+
 const confirmedFactCount = computed(
     () =>
         props.entries
@@ -144,6 +149,12 @@ const confirmedFactCount = computed(
                 <Button><Plus /> Add entry</Button>
             </LedgerEntryDialog>
         </div>
+
+        <LedgerGuide
+            v-if="confirmedFactCount === 0"
+            :total-facts="totalFactCount"
+            :usable-facts="confirmedFactCount"
+        />
 
         <section class="space-y-4 rounded-xl border p-4">
             <div class="space-y-1">

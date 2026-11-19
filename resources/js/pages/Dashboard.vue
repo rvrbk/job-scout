@@ -4,6 +4,7 @@ import { computed, onMounted } from "vue";
 import StackedBars from "@/components/dashboard/StackedBars.vue";
 import StatTile from "@/components/dashboard/StatTile.vue";
 import Heading from "@/components/Heading.vue";
+import LedgerGuide from "@/components/LedgerGuide.vue";
 import { Button } from "@/components/ui/button";
 import { useTour } from "@/composables/useTour";
 import { dashboard } from "@/routes";
@@ -103,6 +104,13 @@ const reviewNote = computed(() =>
             </Button>
         </div>
 
+        <LedgerGuide
+            v-if="ledger.usable_facts === 0"
+            :total-facts="ledger.total_facts"
+            :usable-facts="ledger.usable_facts"
+            link-to-ledger
+        />
+
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <StatTile
                 label="Usable facts"
@@ -124,11 +132,7 @@ const reviewNote = computed(() =>
                         : 'nothing new right now'
                 "
             />
-            <StatTile
-                label="Job matches"
-                :value="jobs.matches"
-                :note="best"
-            />
+            <StatTile label="Job matches" :value="jobs.matches" :note="best" />
             <StatTile
                 label="Approved documents"
                 :value="documents.approved"

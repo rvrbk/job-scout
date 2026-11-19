@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
-import { checkout, index, portal } from '@/routes/billing';
+import { Form, Head, Link, usePoll } from "@inertiajs/vue3";
+import { watch } from "vue";
+import Heading from "@/components/Heading.vue";
+import { Button } from "@/components/ui/button";
+import { checkout, index, portal } from "@/routes/billing";
+import { index as ledgerIndex } from "@/routes/ledger";
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: 'Billing', href: index() }],
+        breadcrumbs: [{ title: "Billing", href: index() }],
     },
 });
 
-defineProps<{
+const props = defineProps<{
     enforced: boolean;
     exempt: boolean;
     subscribed: boolean;
@@ -20,6 +22,19 @@ defineProps<{
     hasCustomer: boolean;
     justPaid: boolean;
 }>();
+
+// Right after paying, the subscription arrives by webhook a moment later: keep checking until it does.
+const { start, stop } = usePoll(
+    2000,
+    { only: ["subscribed", "status", "endsAt", "cancels"] },
+    { autoStart: false },
+);
+
+watch(
+    () => props.justPaid && !props.subscribed,
+    (waiting) => (waiting ? start() : stop()),
+    { immediate: true },
+);
 
 const date = (value: string) => new Date(value).toLocaleDateString();
 </script>
@@ -40,11 +55,29 @@ const date = (value: string) => new Date(value).toLocaleDateString();
             Subscriptions are not switched on yet, so everything is available.
         </p>
 
-        <p v-else-if="exempt && !subscribed" class="text-sm text-muted-foreground">
+        <p
+            v-else-if="exempt && !subscribed"
+            class="text-sm text-muted-foreground"
+        >
             Your account has free access. No subscription needed.
         </p>
 
         <template v-else-if="subscribed">
+            <div
+                v-if="justPaid"
+                class="space-y-3 rounded-lg border border-primary/40 p-4 text-sm"
+            >
+                <p class="font-medium">Thanks, you are all set!</p>
+                <p class="text-muted-foreground">
+                    The first thing to do is fill your facts ledger: it is what
+                    your job matches and documents are built from. Upload your
+                    CV or write a few lines about yourself, confirm what is
+                    true, and your first job search starts by itself.
+                </p>
+                <Button as-child>
+                    <Link :href="ledgerIndex()">Fill your ledger</Link>
+                </Button>
+            </div>
             <div class="rounded-lg border p-4 text-sm">
                 <p class="font-medium">Your subscription is active.</p>
                 <p v-if="endsAt" class="text-muted-foreground">
@@ -68,7 +101,7 @@ const date = (value: string) => new Date(value).toLocaleDateString();
                 class="rounded-lg border p-4 text-sm text-muted-foreground"
             >
                 Thanks! Waiting for the payment to be confirmed. This page
-                updates once it is; reload in a few seconds if it does not.
+                updates by itself once it is.
             </p>
             <p v-else class="text-sm text-muted-foreground">
                 You do not have an active subscription<template v-if="status">
