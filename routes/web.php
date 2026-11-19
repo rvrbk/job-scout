@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('ledger/{ledgerEntry}', [LedgerEntryController::class, 'destroy'])->name('ledger.destroy');
 
     Route::post('ledger/{ledgerEntry}/facts', [LedgerFactController::class, 'store'])->name('facts.store');
+    Route::post('facts/{ledgerFact}/confirm', [LedgerFactController::class, 'confirm'])->name('facts.confirm');
     Route::put('facts/{ledgerFact}', [LedgerFactController::class, 'update'])->name('facts.update');
     Route::delete('facts/{ledgerFact}', [LedgerFactController::class, 'destroy'])->name('facts.destroy');
 

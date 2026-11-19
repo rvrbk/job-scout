@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePoll } from "@inertiajs/vue3";
 import {
+    Check,
     ExternalLink,
     Pencil,
     Plus,
@@ -332,6 +333,15 @@ const confirmedFactCount = computed(
                             </div>
                         </div>
                         <div class="flex shrink-0 gap-1">
+                            <Link
+                                v-if="!fact.confirmed"
+                                :href="LedgerFactController.confirm(fact.id)"
+                                as="button"
+                                preserve-scroll
+                                class="p-2 text-muted-foreground hover:text-foreground"
+                                title="Confirm fact"
+                                ><Check class="size-4"
+                            /></Link>
                             <Button
                                 variant="ghost"
                                 size="icon"

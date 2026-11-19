@@ -38,6 +38,21 @@ class LedgerFactController extends Controller
         return to_route('ledger.index');
     }
 
+    public function confirm(LedgerFact $ledgerFact): RedirectResponse
+    {
+        Gate::authorize('update', $ledgerFact->entry);
+
+        $ledgerFact->update(['confirmed_at' => $ledgerFact->confirmed_at ?? now()]);
+
+        $started = RunFirstSearch::startFor(request()->user());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $started
+            ? __('Fact confirmed. Your first job search has started; matches appear under Jobs in a few minutes.')
+            : __('Fact confirmed.')]);
+
+        return to_route('ledger.index');
+    }
+
     public function destroy(LedgerFact $ledgerFact): RedirectResponse
     {
         Gate::authorize('update', $ledgerFact->entry);
