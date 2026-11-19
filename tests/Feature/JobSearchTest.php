@@ -340,7 +340,7 @@ class JobSearchTest extends TestCase
 
     public function test_the_scheduled_search_runs_for_users_with_preferences_and_skips_running_ones()
     {
-        Http::fake(['remotive.com/*' => Http::response(['jobs' => []])]);
+        Http::fake(['remotive.com/*' => Http::response(['jobs' => []]), '*' => Http::response([])]);
         $this->fakeLlm();
         $searched = $this->userWithLedger();
         $searched->jobSearchPreference()->create(['min_score' => 60]);

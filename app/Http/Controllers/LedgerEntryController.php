@@ -24,8 +24,9 @@ class LedgerEntryController extends Controller
     {
         $entries = $request->user()->ledgerEntries()
             ->with(['facts' => fn ($query) => $query->orderBy('id')])
+            ->orderByRaw('started_on is null')
             ->orderByDesc('started_on')
-            ->orderBy('id')
+            ->orderByDesc('id')
             ->get();
 
         return Inertia::render('ledger/Index', [

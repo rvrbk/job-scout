@@ -142,6 +142,18 @@ class LedgerTest extends TestCase
         $response->assertRedirect(route('ledger.index', ['fact' => $entry->facts()->sole()->id]));
     }
 
+    public function test_entries_are_listed_newest_first_with_undated_ones_last()
+    {
+        $user = User::factory()->create();
+        $old = LedgerEntry::factory()->for($user)->create(['title' => 'Old', 'started_on' => '2015-01-01']);
+        $undated = LedgerEntry::factory()->for($user)->create(['title' => 'Undated', 'started_on' => null]);
+        $new = LedgerEntry::factory()->for($user)->create(['title' => 'New', 'started_on' => '2024-01-01']);
+
+        $this->actingAs($user)->get(route('ledger.index'))->assertInertia(
+            fn (AssertableInertia $page) => $page->where('entries.0.title', 'New')->where('entries.1.title', 'Old')->where('entries.2.title', 'Undated'),
+        );
+    }
+
     public function test_facts_can_be_added_updated_and_deleted()
     {
         $entry = LedgerEntry::factory()->create();
