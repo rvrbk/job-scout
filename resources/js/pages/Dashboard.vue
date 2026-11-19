@@ -157,10 +157,9 @@ const reviewNote = computed(() =>
                     :label-every="2"
                 />
                 <p v-else class="text-sm text-muted-foreground">
-                    No jobs scored yet.
-                    <Link :href="jobsIndex()" class="underline">
-                        Run a search
-                    </Link>
+                    No jobs scored yet. Your first search starts when you have
+                    confirmed facts in your
+                    <Link :href="ledgerIndex()" class="underline">ledger</Link>.
                 </p>
             </section>
 

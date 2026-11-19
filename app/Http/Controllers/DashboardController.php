@@ -21,9 +21,16 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $minScore = $user->jobSearchPreference?->min_score ?? 60;
+        $ledger = $this->ledger($user);
+
+        // Someone with nothing usable yet sees the "Start here" guide instead, so the tour must not open over it
+        // now, nor pop up later once they have filled the ledger.
+        if ($user->onboarded_at === null && $ledger['usable_facts'] === 0) {
+            $user->forceFill(['onboarded_at' => now()])->save();
+        }
 
         return Inertia::render('Dashboard', [
-            'ledger' => $this->ledger($user),
+            'ledger' => $ledger,
             'jobs' => $this->jobs($user, $minScore),
             'documents' => $this->documents($user),
             'showTour' => $user->onboarded_at === null,

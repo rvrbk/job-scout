@@ -83,7 +83,6 @@ const currentIndex = computed(() => {
                 v-for="(step, index) in steps"
                 :key="step.title"
                 class="flex gap-3"
-                :class="index > currentIndex && 'opacity-60'"
             >
                 <span
                     class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold"
@@ -99,7 +98,12 @@ const currentIndex = computed(() => {
                     <template v-else>{{ index + 1 }}</template>
                 </span>
                 <div class="space-y-2 text-sm">
-                    <h3 class="font-semibold">{{ step.title }}</h3>
+                    <h3
+                        class="font-semibold"
+                        :class="index > currentIndex && 'text-muted-foreground'"
+                    >
+                        {{ step.title }}
+                    </h3>
                     <template
                         v-if="index === currentIndex || step.done === false"
                     >

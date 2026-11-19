@@ -150,12 +150,6 @@ const confirmedFactCount = computed(
             </LedgerEntryDialog>
         </div>
 
-        <LedgerGuide
-            v-if="confirmedFactCount === 0"
-            :total-facts="totalFactCount"
-            :usable-facts="confirmedFactCount"
-        />
-
         <section class="space-y-4 rounded-xl border p-4">
             <div class="space-y-1">
                 <h3 class="text-sm font-medium">Add to your ledger</h3>
@@ -286,6 +280,12 @@ const confirmedFactCount = computed(
                 waiting for your confirmation.
             </p>
         </section>
+
+        <LedgerGuide
+            v-if="confirmedFactCount === 0"
+            :total-facts="totalFactCount"
+            :usable-facts="confirmedFactCount"
+        />
 
         <p class="text-sm text-muted-foreground">
             {{ confirmedFactCount }} confirmed
