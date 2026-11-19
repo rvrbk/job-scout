@@ -28,6 +28,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'lore' => [
+        // Shared secret that lets Lore read the new-match count; the endpoint is disabled while this is empty.
+        'token' => env('LORE_API_TOKEN'),
+    ],
+
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-opus-5-5'),

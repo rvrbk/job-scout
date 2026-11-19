@@ -9,6 +9,7 @@ use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\LedgerEntryController;
 use App\Http\Controllers\LedgerFactController;
 use App\Http\Controllers\LedgerImportController;
+use App\Http\Controllers\LoreNewMatchesController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PolarWebhookController;
 use App\Http\Controllers\SeoController;
@@ -28,6 +29,7 @@ Route::middleware(['guest', 'throttle:10,1'])->group(function () {
     Route::post('invitations/{token}', [InvitationRegistrationController::class, 'store'])->name('invitations.register');
 });
 
+Route::get('integrations/lore/new-matches', LoreNewMatchesController::class)->middleware('throttle:30,1')->name('integrations.lore.new-matches');
 Route::post('webhooks/polar', PolarWebhookController::class)->name('webhooks.polar');
 
 Route::middleware(['auth', 'verified'])->group(function () {
