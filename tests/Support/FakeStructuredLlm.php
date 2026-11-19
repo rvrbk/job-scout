@@ -22,7 +22,7 @@ class FakeStructuredLlm implements StructuredLlm
     /**
      * {@inheritDoc}
      */
-    public function generate(string $system, string $prompt, array $schema): array
+    public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
     {
         $this->calls[] = ['system' => $system, 'prompt' => $prompt, 'schema' => $schema];
 

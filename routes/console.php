@@ -8,4 +8,4 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('jobs:search')->everyTwoHours()->withoutOverlapping(120)->runInBackground();
+Schedule::command('jobs:search')->twiceDaily(7, 19)->withoutOverlapping(120)->runInBackground();

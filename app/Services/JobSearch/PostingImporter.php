@@ -78,7 +78,7 @@ class PostingImporter
                 ],
                 'required' => ['title', 'company', 'description'],
                 'additionalProperties' => false,
-            ]);
+            ], 'posting');
         } catch (LlmException) {
             throw new RuntimeException(__('Couldn\'t read that vacancy right now. Try again, or fill in the title yourself.'));
         }

@@ -26,7 +26,7 @@ class JobSearchTest extends TestCase
     private function userWithLedger(): User
     {
         $user = User::factory()->create();
-        $entry = LedgerEntry::factory()->for($user)->create(['type' => LedgerEntryType::Experience, 'confirmed_at' => now()]);
+        $entry = LedgerEntry::factory()->for($user)->create(['type' => LedgerEntryType::Experience, 'title' => 'Developer', 'skills' => ['job', 'hybrid', 'remote', 'work', 'engineer', 'laravel'], 'confirmed_at' => now()]);
         LedgerFact::factory()->for($entry, 'entry')->create(['confirmed_at' => now()]);
 
         return $user;
@@ -41,7 +41,7 @@ class JobSearchTest extends TestCase
         {
             public int $calls = 0;
 
-            public function generate(string $system, string $prompt, array $schema): array
+            public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
             {
                 $this->calls++;
                 preg_match_all('/<posting index="(\d+)">\nTitle: (.*)\n/', $prompt, $postings, PREG_SET_ORDER);
@@ -354,13 +354,13 @@ class JobSearchTest extends TestCase
         $lock->release();
     }
 
-    public function test_the_search_is_scheduled_every_two_hours()
+    public function test_the_search_is_scheduled_twice_a_day()
     {
         $event = collect(app(Schedule::class)->events())
             ->first(fn ($event) => str_contains($event->command, 'jobs:search'));
 
         $this->assertNotNull($event);
-        $this->assertSame('0 */2 * * *', $event->expression);
+        $this->assertSame('0 7,19 * * *', $event->expression);
     }
 
     public function test_preferences_can_be_saved()
@@ -578,7 +578,7 @@ class JobSearchTest extends TestCase
         ]);
         $this->app->instance(StructuredLlm::class, new class implements StructuredLlm
         {
-            public function generate(string $system, string $prompt, array $schema): array
+            public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
             {
                 return ['boards' => [
                     ['index' => 0, 'reason' => 'Laravel overlap.'],

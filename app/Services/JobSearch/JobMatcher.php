@@ -12,9 +12,9 @@ use App\Services\Llm\StructuredLlm;
  */
 class JobMatcher
 {
-    private const int BATCH_SIZE = 8;
+    private const int BATCH_SIZE = 15;
 
-    private const int DESCRIPTION_LIMIT = 2500;
+    private const int DESCRIPTION_LIMIT = 1800;
 
     private const string SYSTEM_PROMPT = <<<'PROMPT'
         You help a job seeker decide which job postings are worth their time. You get their facts ledger (confirmed statements about their experience, projects, education, certifications and skills) and a list of postings.
@@ -28,7 +28,7 @@ class JobMatcher
 
         If the candidate gives a salary expectation, lower the score of a posting that states a pay range clearly below it. A posting that states no salary isn't penalised, and the expectation never raises a score.
 
-        reason: one or two plain sentences naming the strongest match and the biggest gap. Mention only things that appear in the ledger or the posting.
+        reason: one short sentence naming the strongest match and the biggest gap. Mention only things that appear in the ledger or the posting.
         PROMPT;
 
     public function __construct(private StructuredLlm $llm) {}
@@ -46,8 +46,11 @@ class JobMatcher
         foreach (array_chunk($jobs, self::BATCH_SIZE, preserve_keys: true) as $batch) {
             $output = $this->llm->generate(
                 self::SYSTEM_PROMPT,
-                "<ledger>\n{$ledger}\n</ledger>\n\n{$expectation}".$this->postings($batch),
+                $this->postings($batch),
                 $this->schema(),
+                'match',
+                // Identical for every batch of this run, so batches after the first read it from cache.
+                "<ledger>\n{$ledger}\n</ledger>\n\n{$expectation}",
             );
 
             foreach ($output['matches'] ?? [] as $match) {

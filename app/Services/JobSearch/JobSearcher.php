@@ -30,7 +30,7 @@ use Throwable;
 class JobSearcher
 {
     /** Cap on model-scored postings per run, to keep cost predictable. */
-    public const int MAX_NEW_PER_RUN = 100;
+    public const int MAX_NEW_PER_RUN = 60;
 
     private const int MAX_AGE_DAYS = 30;
 
@@ -57,6 +57,8 @@ class JobSearcher
             throw new RuntimeException(__('Your ledger has no confirmed facts yet.'));
         }
 
+        $ledgerTerms = self::ledgerTerms($snapshot);
+
         $run = $user->jobSearchRuns()->create(['trigger' => $trigger, 'started_at' => now()]);
 
         [$found, $failed] = $this->fetch($preferences);
@@ -78,6 +80,7 @@ class JobSearcher
             ->reject(fn (FoundJob $job) => $existing->has("{$job->source}|".Str::limit($job->externalId, 255, '')))
             ->reject(fn (FoundJob $job) => ($print = self::fingerprint($job->title, $job->company)) !== null && $known->has($print))
             ->filter(fn (FoundJob $job) => $this->passes($job, $preferences))
+            ->filter(fn (FoundJob $job) => $this->relatesToLedger($job, $ledgerTerms))
             ->sortByDesc(fn (FoundJob $job) => $job->postedAt?->getTimestamp() ?? 0)
             ->unique(fn (FoundJob $job) => self::fingerprint($job->title, $job->company) ?? "{$job->source}|{$job->externalId}")
             ->take(self::MAX_NEW_PER_RUN)
@@ -232,6 +235,58 @@ class JobSearcher
         return str_contains($haystack, 'hybrid')
             ? JobSearchPreference::acceptsHybrid($mode)
             : JobSearchPreference::acceptsOnSite($mode);
+    }
+
+    /**
+     * Words from the ledger's skills and entry titles, used to drop postings from an unrelated field before paying
+     * for a model call. A short word like "php" counts; generic filler doesn't.
+     *
+     * @return list<string>
+     */
+    private static function ledgerTerms(LedgerSnapshot $snapshot): array
+    {
+        $stop = ['and', 'the', 'for', 'with', 'senior', 'junior', 'lead', 'intern', 'manager', 'team', 'work'];
+        $phrases = [...$snapshot->skills(), ...$snapshot->entries->pluck('title')->all()];
+        $terms = [];
+
+        foreach ($phrases as $phrase) {
+            $phrase = mb_strtolower(trim((string) $phrase));
+
+            if ($phrase !== '') {
+                $terms[] = $phrase;
+            }
+
+            foreach (preg_split('/[^\p{L}\p{N}+#.]+/u', $phrase, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
+                if (mb_strlen($word) >= 3 && ! in_array($word, $stop, true)) {
+                    $terms[] = $word;
+                }
+            }
+        }
+
+        return array_values(array_unique($terms));
+    }
+
+    /**
+     * A posting that shares no skill or title word with the ledger can't score well, so it isn't sent to the model.
+     * With no terms to go on, everything passes.
+     *
+     * @param  list<string>  $terms
+     */
+    private function relatesToLedger(FoundJob $job, array $terms): bool
+    {
+        if ($terms === []) {
+            return true;
+        }
+
+        $haystack = $job->haystack();
+
+        foreach ($terms as $term) {
+            if (str_contains($haystack, $term)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

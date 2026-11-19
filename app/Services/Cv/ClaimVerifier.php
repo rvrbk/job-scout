@@ -138,6 +138,7 @@ class ClaimVerifier
                 'required' => ['results'],
                 'additionalProperties' => false,
             ],
+            'verify',
         );
 
         $results = is_array($output['results'] ?? null) ? $output['results'] : [];

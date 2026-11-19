@@ -44,6 +44,7 @@ class DocumentGenerator
             self::SYSTEM_PROMPT,
             $this->prompt($document, $snapshot, $isCv),
             $isCv ? $this->cvSchema() : $this->coverLetterSchema(),
+            'generate',
         );
 
         DB::transaction(function () use ($document, $snapshot, $output, $isCv) {
@@ -113,6 +114,7 @@ class DocumentGenerator
                 "<ledger>\n".json_encode($ledger, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n</ledger>",
             ])),
             $this->citedSentenceSchema(),
+            'regenerate',
         );
 
         $text = is_string($output['text'] ?? null) ? trim($output['text']) : '';

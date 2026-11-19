@@ -59,7 +59,7 @@ class BoardFinder
         }
 
         $specs = array_keys($catalog);
-        $output = $this->llm->generate(self::SYSTEM_PROMPT, $this->prompt($snapshot, $preferences, $catalog), $this->schema());
+        $output = $this->llm->generate(self::SYSTEM_PROMPT, $this->prompt($snapshot, $preferences, $catalog), $this->schema(), 'boards');
 
         $suggestions = [];
 

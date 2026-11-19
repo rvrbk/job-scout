@@ -46,6 +46,7 @@ class LedgerImporter
             self::SYSTEM_PROMPT.($isNote ? self::NOTE_PROMPT : ''),
             $this->prompt($text, $existing, $isNote),
             $this->schema(),
+            'ledger',
         );
 
         $addedEntries = 0;

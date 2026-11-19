@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
             client: new Client(apiKey: config('services.anthropic.key')),
             model: config('services.anthropic.model'),
             effort: Effort::from(config('services.anthropic.effort')),
+            tasks: config('services.anthropic.tasks', []),
         ));
     }
 

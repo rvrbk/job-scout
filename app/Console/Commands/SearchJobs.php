@@ -18,7 +18,8 @@ class SearchJobs extends Command
     public function handle(): int
     {
         User::whereHas('jobSearchPreference')->each(function (User $user) {
-            if (! LedgerSnapshot::forUser($user)->hasFacts()) {
+            // Scheduled searches cost model calls, so they only run for users who may use the paid features.
+            if (! $user->hasAccess() || ! LedgerSnapshot::forUser($user)->hasFacts()) {
                 return;
             }
 

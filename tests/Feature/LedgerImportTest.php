@@ -31,7 +31,7 @@ class LedgerImportTest extends TestCase
 
             public function __construct(private array $output) {}
 
-            public function generate(string $system, string $prompt, array $schema): array
+            public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
             {
                 $this->prompt = $prompt;
 
@@ -159,7 +159,7 @@ class LedgerImportTest extends TestCase
         $user = User::factory()->create();
         $this->app->instance(StructuredLlm::class, new class implements StructuredLlm
         {
-            public function generate(string $system, string $prompt, array $schema): array
+            public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
             {
                 throw new LlmException('boom');
             }

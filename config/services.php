@@ -32,6 +32,27 @@ return [
         'key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-opus-5-5'),
         'effort' => env('ANTHROPIC_EFFORT', 'high'),
+
+        // Cheap extraction and ranking tasks run on smaller models; drafting and fact-checking
+        // documents keep the default model above. Override per task with ANTHROPIC_<TASK>_MODEL / _EFFORT.
+        'tasks' => [
+            'match' => [
+                'model' => env('ANTHROPIC_MATCH_MODEL', 'claude-haiku-5-5'),
+                'effort' => env('ANTHROPIC_MATCH_EFFORT', 'medium'),
+            ],
+            'posting' => [
+                'model' => env('ANTHROPIC_POSTING_MODEL', 'claude-haiku-5-5'),
+                'effort' => env('ANTHROPIC_POSTING_EFFORT', 'low'),
+            ],
+            'boards' => [
+                'model' => env('ANTHROPIC_BOARDS_MODEL', 'claude-haiku-5-5'),
+                'effort' => env('ANTHROPIC_BOARDS_EFFORT', 'low'),
+            ],
+            'ledger' => [
+                'model' => env('ANTHROPIC_LEDGER_MODEL', 'claude-sonnet-5-5'),
+                'effort' => env('ANTHROPIC_LEDGER_EFFORT', 'medium'),
+            ],
+        ],
     ],
 
     'google_analytics' => [
