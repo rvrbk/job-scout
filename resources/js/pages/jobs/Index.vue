@@ -92,9 +92,10 @@ defineOptions({
                 v-if="found.length === 0"
                 class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
             >
-                No matches yet. The twice-daily search checks every source, scores new jobs
-                against your ledger, and keeps those at or above
-                {{ preferences.min_score }}.
+                No matches yet. Your first search starts as soon as you confirm
+                facts in your ledger. After that the twice-daily search checks every
+                source, scores new jobs against your ledger, and keeps those at or
+                above {{ preferences.min_score }}.
             </p>
 
             <ul v-else class="divide-y rounded-xl border">

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\DocumentType;
 use App\Enums\LedgerEntryType;
+use App\Jobs\RunFirstSearch;
 use App\Jobs\RunJobSearch;
 use App\Models\GeneratedDocument;
 use App\Models\JobPosting;
@@ -612,5 +613,23 @@ class JobSearchTest extends TestCase
     public function test_board_suggestions_need_confirmed_facts()
     {
         $this->actingAs(User::factory()->create())->postJson(route('jobs.boards.suggest'))->assertStatus(422);
+    }
+
+    public function test_confirming_the_first_facts_starts_one_automatic_search()
+    {
+        $this->fakeSources();
+        $this->fakeLlm();
+        $user = User::factory()->create();
+        $entry = LedgerEntry::factory()->for($user)->create(['type' => LedgerEntryType::Experience, 'title' => 'Laravel Developer', 'skills' => ['laravel', 'job', 'work', 'engineer', 'remote'], 'confirmed_at' => null]);
+        $fact = LedgerFact::factory()->for($entry, 'entry')->create(['confirmed_at' => null]);
+
+        $this->actingAs($user)->put(route('ledger.update', $entry), ['type' => 'experience', 'title' => 'Laravel Developer', 'skills' => ['laravel'], 'confirmed' => true])->assertRedirect();
+        $this->assertSame(0, $user->jobSearchRuns()->count(), 'no confirmed facts yet');
+
+        $this->actingAs($user)->put(route('facts.update', $fact), ['statement' => 'Built things.', 'confirmed' => true])->assertRedirect();
+        $this->assertSame(1, $user->jobSearchRuns()->count());
+
+        // Terminating callbacks pile up on the shared test app, so check the decision itself rather than the run count.
+        $this->assertFalse(RunFirstSearch::startFor($user), 'only the first time');
     }
 }

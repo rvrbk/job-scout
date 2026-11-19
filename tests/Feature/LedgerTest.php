@@ -8,12 +8,21 @@ use App\Models\LedgerFact;
 use App\Models\User;
 use App\Services\Cv\LedgerSnapshot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class LedgerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Confirming facts can start the first job search; it must not reach the real sources.
+        Http::fake();
+    }
 
     public function test_guests_cannot_view_the_ledger()
     {

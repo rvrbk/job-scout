@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\LedgerEntryType;
 use App\Http\Requests\LedgerEntryRequest;
 use App\Jobs\ImportLedger;
+use App\Jobs\RunFirstSearch;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use Illuminate\Http\RedirectResponse;
@@ -74,7 +75,11 @@ class LedgerEntryController extends Controller
 
         $ledgerEntry->update($request->entryAttributes($ledgerEntry->confirmed_at));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Entry updated.')]);
+        $started = RunFirstSearch::startFor($request->user());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $started
+            ? __('Entry updated. Your first job search has started; matches appear under Jobs in a few minutes.')
+            : __('Entry updated.')]);
 
         return to_route('ledger.index');
     }

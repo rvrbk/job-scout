@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LedgerFactRequest;
+use App\Jobs\RunFirstSearch;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,11 @@ class LedgerFactController extends Controller
 
         $ledgerFact->update($request->factAttributes($ledgerFact->confirmed_at));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Fact updated.')]);
+        $started = RunFirstSearch::startFor($request->user());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $started
+            ? __('Fact updated. Your first job search has started; matches appear under Jobs in a few minutes.')
+            : __('Fact updated.')]);
 
         return to_route('ledger.index');
     }
