@@ -40,6 +40,12 @@ const lastSearchedAt = computed(() =>
         : null,
 );
 
+// A country code is two letters; the matching regional-indicator pair renders as that country's flag.
+const flag = (code: string) =>
+    String.fromCodePoint(
+        ...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)),
+    );
+
 const found = computed(() => props.postings.filter((posting) => posting.found));
 
 defineOptions({
@@ -118,6 +124,19 @@ defineOptions({
                         class="mt-0.5 w-12 justify-center"
                         >{{ posting.match_score }}</Badge
                     >
+                    <div
+                        v-if="posting.countries.length"
+                        class="mt-0.5 flex w-8 shrink-0 flex-col items-center gap-0.5 text-2xl leading-none"
+                    >
+                        <span
+                            v-for="country in posting.countries"
+                            :key="country.code"
+                            :title="country.name"
+                            role="img"
+                            :aria-label="country.name"
+                            >{{ flag(country.code) }}</span
+                        >
+                    </div>
                     <Link :href="show(posting.id)" class="min-w-0 flex-1">
                         <p
                             :class="

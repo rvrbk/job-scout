@@ -9,6 +9,7 @@ use App\Jobs\RunJobSearch;
 use App\Models\GeneratedDocument;
 use App\Models\JobPosting;
 use App\Models\JobSearchPreference;
+use App\Services\JobSearch\LocationMatcher;
 use App\Services\JobSearch\PostingImporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -215,6 +216,7 @@ class JobPostingController extends Controller
             'title' => $posting->title,
             'company' => $posting->company,
             'location' => $posting->location,
+            'countries' => $this->countries($posting),
             'remote' => $posting->remote,
             'source_url' => $posting->source_url,
             'saved' => $posting->saved_at !== null,
@@ -237,5 +239,28 @@ class JobPostingController extends Controller
                 ->values(),
             'created_at' => $posting->created_at?->toDateString(),
         ];
+    }
+
+    /**
+     * The country (or few countries) a posting's location points to. A whole region says too little to show.
+     *
+     * @return list<array{code: string, name: string}>
+     */
+    private function countries(JobPosting $posting): array
+    {
+        if (blank($posting->location)) {
+            return [];
+        }
+
+        $codes = LocationMatcher::countriesIn($posting->location);
+
+        if (count($codes) > 3) {
+            return [];
+        }
+
+        return collect($codes)
+            ->map(fn (string $code) => ['code' => $code, 'name' => LocationMatcher::countryName($code) ?? $code])
+            ->values()
+            ->all();
     }
 }

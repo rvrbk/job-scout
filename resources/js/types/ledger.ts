@@ -44,6 +44,7 @@ export type JobPostingSummary = {
     title: string;
     company: string | null;
     location: string | null;
+    countries: { code: string; name: string }[];
     remote: boolean | null;
     source_url: string | null;
     found: boolean;

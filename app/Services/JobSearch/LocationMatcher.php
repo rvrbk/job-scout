@@ -149,6 +149,11 @@ class LocationMatcher
         return [];
     }
 
+    public static function countryName(string $code): ?string
+    {
+        return self::countries()[$code][0] ?? null;
+    }
+
     /**
      * The countries a user's listed location stands for, or null when it is something else (a city).
      *
