@@ -358,6 +358,74 @@ class JobSearchTest extends TestCase
         $lock->release();
     }
 
+    private function enforceBilling(): void
+    {
+        config(['services.polar.token' => 'token', 'services.polar.product_id' => 'product']);
+    }
+
+    public function test_free_users_get_the_scheduled_search_on_the_cheaper_task_with_a_smaller_cap()
+    {
+        $this->enforceBilling();
+        $this->fakeSources();
+        $tasks = [];
+        $this->app->instance(StructuredLlm::class, new class($tasks) implements StructuredLlm
+        {
+            public function __construct(public array &$tasks) {}
+
+            public function generate(string $system, string $prompt, array $schema, string $task = 'default', ?string $sharedContext = null): array
+            {
+                $this->tasks[] = $task;
+
+                return ['matches' => []];
+            }
+        });
+        $free = $this->userWithLedger();
+        $free->jobSearchPreference()->create(['min_score' => 60]);
+        $paid = $this->userWithLedger();
+        $paid->forceFill(['subscription_status' => 'active'])->save();
+        $paid->jobSearchPreference()->create(['min_score' => 60]);
+
+        $this->artisan('jobs:search')->assertSuccessful();
+
+        $this->assertSame(1, $free->jobSearchRuns()->count());
+        $this->assertSame(1, $paid->jobSearchRuns()->count());
+        $this->assertContains('match_free', $tasks);
+        $this->assertContains('match', $tasks);
+    }
+
+    public function test_free_users_are_searched_once_a_day_and_subscribers_twice()
+    {
+        $this->enforceBilling();
+        Http::fake(['*' => Http::response([])]);
+        $this->fakeLlm();
+        $free = $this->userWithLedger();
+        $free->jobSearchPreference()->create(['min_score' => 60]);
+        $free->jobSearchRuns()->create(['trigger' => 'scheduled', 'started_at' => now()->subHours(12)]);
+        $paid = $this->userWithLedger();
+        $paid->forceFill(['subscription_status' => 'active'])->save();
+        $paid->jobSearchPreference()->create(['min_score' => 60]);
+        $paid->jobSearchRuns()->create(['trigger' => 'scheduled', 'started_at' => now()->subHours(12)]);
+
+        $this->artisan('jobs:search')->assertSuccessful();
+
+        $this->assertSame(1, $free->jobSearchRuns()->count(), 'searched 12 hours ago');
+        $this->assertSame(2, $paid->jobSearchRuns()->count());
+    }
+
+    public function test_free_searches_score_fewer_postings_per_run()
+    {
+        $this->enforceBilling();
+        $jobs = collect(range(1, 30))->map(fn (int $n) => ['slug' => "j-{$n}", 'title' => "Laravel Developer {$n}", 'company_name' => "Co {$n}", 'location' => 'Amsterdam', 'remote' => false, 'url' => "https://example.com/{$n}", 'description' => 'Work', 'created_at' => now()->timestamp])->all();
+        Http::fake(['arbeitnow.com/*' => Http::response(['data' => $jobs]), '*' => Http::response([])]);
+        $this->fakeLlm();
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['min_score' => 60, 'remote_preference' => 'any']);
+
+        app(JobSearcher::class)->search($user);
+
+        $this->assertSame(JobSearcher::FREE_MAX_NEW_PER_RUN, $user->jobPostings()->count());
+    }
+
     public function test_only_the_admin_can_start_a_search_by_hand()
     {
         $user = $this->userWithLedger();

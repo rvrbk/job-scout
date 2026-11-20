@@ -37,7 +37,7 @@ class JobMatcher
      * @param  list<FoundJob>  $jobs
      * @return array<int, array{score: int, reason: string}> keyed by the job's position in $jobs
      */
-    public function score(array $jobs, LedgerSnapshot $snapshot, ?string $salaryExpectation = null): array
+    public function score(array $jobs, LedgerSnapshot $snapshot, ?string $salaryExpectation = null, string $task = 'match'): array
     {
         $ledger = json_encode($snapshot->toPromptArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $expectation = $salaryExpectation === null ? '' : "<salary_expectation>\n{$salaryExpectation} gross per year\n</salary_expectation>\n\n";
@@ -48,7 +48,7 @@ class JobMatcher
                 self::SYSTEM_PROMPT,
                 $this->postings($batch),
                 $this->schema(),
-                'match',
+                $task,
                 // Identical for every batch of this run, so batches after the first read it from cache.
                 "<ledger>\n{$ledger}\n</ledger>\n\n{$expectation}",
             );

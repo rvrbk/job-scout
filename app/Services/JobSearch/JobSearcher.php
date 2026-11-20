@@ -32,6 +32,9 @@ class JobSearcher
     /** Cap on model-scored postings per run, to keep cost predictable. */
     public const int MAX_NEW_PER_RUN = 60;
 
+    /** Free accounts get a smaller batch per run, scored by the cheaper 'match_free' model task. */
+    public const int FREE_MAX_NEW_PER_RUN = 20;
+
     private const int MAX_AGE_DAYS = 30;
 
     /** How long a title and company keep a repost of the same job from resurfacing. */
@@ -59,6 +62,8 @@ class JobSearcher
 
         $ledgerTerms = self::ledgerTerms($snapshot);
 
+        $paid = $user->hasAccess();
+
         $run = $user->jobSearchRuns()->create(['trigger' => $trigger, 'started_at' => now()]);
 
         [$found, $failed] = $this->fetch($preferences);
@@ -83,11 +88,11 @@ class JobSearcher
             ->filter(fn (FoundJob $job) => $this->relatesToLedger($job, $ledgerTerms))
             ->sortByDesc(fn (FoundJob $job) => $job->postedAt?->getTimestamp() ?? 0)
             ->unique(fn (FoundJob $job) => self::fingerprint($job->title, $job->company) ?? "{$job->source}|{$job->externalId}")
-            ->take(self::MAX_NEW_PER_RUN)
+            ->take($paid ? self::MAX_NEW_PER_RUN : self::FREE_MAX_NEW_PER_RUN)
             ->values()
             ->all();
 
-        $scores = $candidates === [] ? [] : $this->matcher->score($candidates, $snapshot, $preferences->salaryExpectation());
+        $scores = $candidates === [] ? [] : $this->matcher->score($candidates, $snapshot, $preferences->salaryExpectation(), $paid ? 'match' : 'match_free');
         $matched = 0;
 
         foreach ($scores as $index => $match) {

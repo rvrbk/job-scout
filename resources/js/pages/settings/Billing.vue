@@ -48,7 +48,7 @@ const date = (value: string) => new Date(value).toLocaleDateString();
         <Heading
             variant="small"
             title="Billing"
-            description="A subscription unlocks document generation and job search."
+            description="Job search is free. A subscription unlocks document generation, board suggestions, and fuller, twice-daily searches."
         />
 
         <p v-if="!enforced" class="text-sm text-muted-foreground">

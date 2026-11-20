@@ -15,11 +15,18 @@ use Illuminate\Support\Facades\Cache;
 #[Description('Run the job search for every user who has set search preferences')]
 class SearchJobs extends Command
 {
+    /** Slightly under a day, so the 7:00 run is not skipped by a 19:00 run that finished a little late. */
+    private const int FREE_INTERVAL_HOURS = 20;
+
     public function handle(): int
     {
         User::whereHas('jobSearchPreference')->each(function (User $user) {
-            // Scheduled searches cost model calls, so they only run for users who may use the paid features.
-            if (! $user->hasAccess() || ! LedgerSnapshot::forUser($user)->hasFacts()) {
+            if (! LedgerSnapshot::forUser($user)->hasFacts()) {
+                return;
+            }
+
+            // Free accounts are searched once a day instead of twice, to keep model spend down.
+            if (! $user->hasAccess() && $user->jobSearchRuns()->where('started_at', '>', now()->subHours(self::FREE_INTERVAL_HOURS))->exists()) {
                 return;
             }
 

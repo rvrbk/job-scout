@@ -45,6 +45,11 @@ return [
                 'model' => env('ANTHROPIC_MATCH_MODEL', 'claude-haiku-5-5'),
                 'effort' => env('ANTHROPIC_MATCH_EFFORT', 'medium'),
             ],
+            // Free accounts' searches: same cheap model, lowest effort.
+            'match_free' => [
+                'model' => env('ANTHROPIC_MATCH_FREE_MODEL', 'claude-haiku-5-5'),
+                'effort' => env('ANTHROPIC_MATCH_FREE_EFFORT', 'low'),
+            ],
             'posting' => [
                 'model' => env('ANTHROPIC_POSTING_MODEL', 'claude-haiku-5-5'),
                 'effort' => env('ANTHROPIC_POSTING_EFFORT', 'low'),

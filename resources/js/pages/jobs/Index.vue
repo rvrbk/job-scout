@@ -60,7 +60,7 @@ defineOptions({
                     :description="
                         lastSearchedAt
                             ? `Jobs scored against your confirmed ledger. Last searched ${lastSearchedAt}.`
-                            : 'Jobs scored against your confirmed ledger. New jobs are searched for twice a day.'
+                            : 'Jobs scored against your confirmed ledger. New jobs are searched for every day.'
                     "
                 />
                 <Form
@@ -93,7 +93,7 @@ defineOptions({
                 class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
             >
                 No matches yet. Your first search starts as soon as you confirm
-                facts in your ledger. After that the twice-daily search checks every
+                facts in your ledger. After that the daily search checks every
                 source, scores new jobs against your ledger, and keeps those at or
                 above {{ preferences.min_score }}.
             </p>

@@ -8,8 +8,8 @@ use App\Services\Cv\LedgerSnapshot;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * A new subscriber should see matches soon after confirming their first facts, not at the next scheduled run.
- * Manual searches are admin-only, so this starts one search per user, the first time they are able to have one.
+ * A new user should see matches soon after confirming their first facts, not at the next scheduled run.
+ * Manual searches are admin-only, so this starts one search per user, the first time they have confirmed facts.
  */
 class RunFirstSearch
 {
@@ -18,7 +18,7 @@ class RunFirstSearch
      */
     public static function startFor(User $user): bool
     {
-        if (! $user->hasAccess() || $user->jobSearchRuns()->exists() || ! LedgerSnapshot::forUser($user)->hasFacts()) {
+        if ($user->jobSearchRuns()->exists() || ! LedgerSnapshot::forUser($user)->hasFacts()) {
             return false;
         }
 

@@ -48,7 +48,7 @@ const steps = computed(() => [
         done: false,
         body: [
             "The moment you have confirmed facts, your first job search starts automatically. Job Scout looks through its job sources, scores every posting from 0 to 100 against your confirmed facts and skills, and tells you why: what fits and what is missing. Matches then appear under Jobs, best score first.",
-            "After that it searches again twice a day, so new matches keep arriving without you doing anything. The more you have confirmed, the better the matches. From any job you can draft a CV or cover letter that uses only your confirmed facts.",
+            "After that it searches again every day, so new matches keep arriving without you doing anything. The more you have confirmed, the better the matches. From any job you can draft a CV or cover letter that uses only your confirmed facts.",
         ],
         tips: [],
     },
