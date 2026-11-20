@@ -248,19 +248,22 @@ class JobPostingController extends Controller
      */
     private function countries(JobPosting $posting): array
     {
-        if (blank($posting->location)) {
-            return [];
+        // The location is the best source; a title like "Engineer | Ireland | Remote" fills in when it says nothing usable.
+        foreach ([$posting->location, $posting->title] as $text) {
+            if (blank($text)) {
+                continue;
+            }
+
+            $codes = LocationMatcher::countriesIn($text);
+
+            if ($codes !== [] && count($codes) <= 3) {
+                return collect($codes)
+                    ->map(fn (string $code) => ['code' => $code, 'name' => LocationMatcher::countryName($code) ?? $code])
+                    ->values()
+                    ->all();
+            }
         }
 
-        $codes = LocationMatcher::countriesIn($posting->location);
-
-        if (count($codes) > 3) {
-            return [];
-        }
-
-        return collect($codes)
-            ->map(fn (string $code) => ['code' => $code, 'name' => LocationMatcher::countryName($code) ?? $code])
-            ->values()
-            ->all();
+        return [];
     }
 }
