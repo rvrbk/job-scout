@@ -4,6 +4,7 @@ import { Bookmark, ExternalLink, Search, X } from '@lucide/vue';
 import { computed, watch } from 'vue';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
 import Heading from '@/components/Heading.vue';
+import CountryFlags from '@/components/jobs/CountryFlags.vue';
 import DocumentBadges from '@/components/jobs/DocumentBadges.vue';
 import JobSearchPreferencesForm from '@/components/jobs/JobSearchPreferencesForm.vue';
 import { Badge } from '@/components/ui/badge';
@@ -39,12 +40,6 @@ const lastSearchedAt = computed(() =>
         ? new Date(props.preferences.last_searched_at).toLocaleString()
         : null,
 );
-
-// A country code is two letters; the matching regional-indicator pair renders as that country's flag.
-const flag = (code: string) =>
-    String.fromCodePoint(
-        ...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)),
-    );
 
 const found = computed(() => props.postings.filter((posting) => posting.found));
 
@@ -124,19 +119,7 @@ defineOptions({
                         class="mt-0.5 w-12 justify-center"
                         >{{ posting.match_score }}</Badge
                     >
-                    <div
-                        v-if="posting.countries.length"
-                        class="mt-0.5 flex w-8 shrink-0 flex-col items-center gap-0.5 text-2xl leading-none"
-                    >
-                        <span
-                            v-for="country in posting.countries"
-                            :key="country.code"
-                            :title="country.name"
-                            role="img"
-                            :aria-label="country.name"
-                            >{{ flag(country.code) }}</span
-                        >
-                    </div>
+                    <CountryFlags :countries="posting.countries" class="mt-1" />
                     <Link :href="show(posting.id)" class="min-w-0 flex-1">
                         <p
                             :class="

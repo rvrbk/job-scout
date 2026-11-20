@@ -4,6 +4,7 @@ import { Bookmark } from '@lucide/vue';
 import { onBeforeUnmount, ref } from 'vue';
 import JobSearchController from '@/actions/App/Http/Controllers/JobSearchController';
 import Heading from '@/components/Heading.vue';
+import CountryFlags from '@/components/jobs/CountryFlags.vue';
 import DocumentBadges from '@/components/jobs/DocumentBadges.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,9 +98,10 @@ defineOptions({
                 >
                     <Link
                         :href="show(posting.id)"
-                        class="flex min-w-0 flex-1 items-center justify-between gap-4 p-4 hover:bg-muted/50"
+                        class="flex min-w-0 flex-1 items-center gap-4 p-4 hover:bg-muted/50"
                     >
-                        <div>
+                        <CountryFlags :countries="posting.countries" />
+                        <div class="min-w-0 flex-1">
                             <p class="font-medium">{{ posting.title }}</p>
                             <p class="text-sm text-muted-foreground">
                                 {{ posting.company ?? 'Unknown company' }} ·
