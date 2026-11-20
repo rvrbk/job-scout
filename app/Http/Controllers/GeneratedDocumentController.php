@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentFont;
+use App\Enums\DocumentLanguage;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -49,6 +50,7 @@ class GeneratedDocumentController extends Controller
             'style' => ['nullable', Rule::enum(DocumentStyle::class)],
             'font' => ['nullable', Rule::enum(DocumentFont::class)],
             'tone' => ['nullable', Rule::enum(DocumentTone::class)],
+            'language' => ['nullable', Rule::enum(DocumentLanguage::class)],
         ]);
 
         if (! LedgerSnapshot::forUser($request->user())->hasFacts()) {
@@ -62,11 +64,14 @@ class GeneratedDocumentController extends Controller
         $font = DocumentFont::tryFrom($validated['font'] ?? '') ?? $user->documentFont();
         $tone = DocumentTone::tryFrom($validated['tone'] ?? '') ?? DocumentTone::Professional;
 
-        // Remember the choice so the next document starts from the same look and tone.
+        $language = DocumentLanguage::tryFrom($validated['language'] ?? '') ?? $user->documentLanguage();
+
+        // Remember the choice so the next document starts from the same look, tone and language.
         $user->forceFill([
             'preferred_document_style' => $style,
             'preferred_document_font' => $font,
             'preferred_document_tone' => $tone,
+            'preferred_document_language' => $language,
         ])->save();
 
         $document = $request->user()->generatedDocuments()->create([
@@ -75,12 +80,24 @@ class GeneratedDocumentController extends Controller
             'style' => $style,
             'font' => $font,
             'tone' => $tone,
+            'language' => $language,
             'status' => DocumentStatus::Generating,
         ]);
 
         GenerateDocument::dispatch($document);
 
         return to_route('documents.show', $document);
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public static function languageOptions(): array
+    {
+        return collect(DocumentLanguage::cases())->map(fn (DocumentLanguage $language) => [
+            'value' => $language->value,
+            'label' => $language->label(),
+        ])->all();
     }
 
     /**
@@ -125,6 +142,7 @@ class GeneratedDocumentController extends Controller
                 'style_label' => $generatedDocument->style->label(),
                 'font_label' => $generatedDocument->font->label(),
                 'tone_label' => $generatedDocument->tone->label(),
+                'language_label' => $generatedDocument->language->label(),
                 'status' => $generatedDocument->status->value,
                 'is_processing' => $generatedDocument->status->isProcessing(),
                 'can_be_approved' => $generatedDocument->canBeApproved(),

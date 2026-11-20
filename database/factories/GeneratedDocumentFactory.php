@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\DocumentLanguage;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentType;
 use App\Models\GeneratedDocument;
@@ -24,6 +25,7 @@ class GeneratedDocumentFactory extends Factory
             'job_posting_id' => JobPosting::factory(),
             'user_id' => fn (array $attributes) => JobPosting::query()->whereKey($attributes['job_posting_id'])->value('user_id'),
             'type' => DocumentType::Cv,
+            'language' => DocumentLanguage::English,
             'status' => DocumentStatus::Generating,
             'gaps' => [],
         ];

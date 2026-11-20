@@ -24,6 +24,8 @@ class ClaimVerifier
         - kind "claim": supported only if everything it asserts about the candidate is stated in, or directly implied by, the cited facts. Paraphrasing and summarising are fine. It is unsupported if it adds specifics (technologies, numbers, durations, team size, outcomes), inflates scope or seniority, or turns a single instance into a general pattern.
         - kind "framing": supported only if it asserts nothing about the candidate's experience, skills, achievements or traits. Statements about the job or the company are fine.
 
+        The sentences may be written in a different language than the facts. Judge by meaning, and treat a faithful translation as supported. Write your reasons in English.
+
         Give a one-sentence reason for each verdict that names the unsupported part when there is one. Return a result for every claim_id.
         PROMPT;
 

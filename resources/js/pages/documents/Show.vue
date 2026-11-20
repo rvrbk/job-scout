@@ -92,7 +92,8 @@ const locked = computed(() => props.document.is_processing);
                 <p class="text-sm text-muted-foreground">
                     PDF: {{ document.font_label }} font,
                     {{ document.style_label }} colours · Tone:
-                    {{ document.tone_label }}
+                    {{ document.tone_label }} · Language:
+                    {{ document.language_label }}
                     <button
                         v-if="!choosingLook"
                         type="button"

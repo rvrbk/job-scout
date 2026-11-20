@@ -33,7 +33,12 @@ class DocumentRenderer
     {
         $document->loadMissing(['claims.entry', 'claims.facts', 'user']);
 
-        $shared = ['fonts' => resource_path('fonts'), 'style' => $document->style->value, 'font' => $document->font->value];
+        $shared = [
+            'fonts' => resource_path('fonts'),
+            'style' => $document->style->value,
+            'font' => $document->font->value,
+            'language' => $document->language,
+        ];
 
         $html = $document->type === DocumentType::Cv
             ? view('pdf.cv', [...$this->cvViewData($document), ...$shared])->render()
@@ -180,7 +185,7 @@ class DocumentRenderer
         $summary = $claims->get(DocumentClaim::SECTION_SUMMARY, collect());
 
         if ($summary->isNotEmpty()) {
-            $lines[] = '## '.__('Summary');
+            $lines[] = '## '.$document->language->term('summary');
             $lines[] = '';
             $lines[] = $summary->pluck('text')->implode(' ');
             $lines[] = '';
@@ -189,7 +194,7 @@ class DocumentRenderer
         $experience = $this->experienceGroups($claims);
 
         if ($experience->isNotEmpty()) {
-            $lines[] = '## '.__('Experience');
+            $lines[] = '## '.$document->language->term('experience');
             $lines[] = '';
 
             foreach ($experience as $bullets) {
@@ -202,7 +207,7 @@ class DocumentRenderer
 
                 foreach ($bullets as $bullet) {
                     $url = $this->claimUrl($bullet);
-                    $lines[] = $url !== null ? "- {$bullet->text} ([".__('source')."]({$url}))" : "- {$bullet->text}";
+                    $lines[] = $url !== null ? "- {$bullet->text} ([".$document->language->term('source')."]({$url}))" : "- {$bullet->text}";
                 }
 
                 $lines[] = '';
@@ -213,7 +218,7 @@ class DocumentRenderer
             ->entriesOfType(LedgerEntryType::Education->value, LedgerEntryType::Certification->value);
 
         if ($credentials->isNotEmpty()) {
-            $lines[] = '## '.__('Education & certifications');
+            $lines[] = '## '.$document->language->term('education');
             $lines[] = '';
             $lines = [...$lines, ...$credentials->map(fn (LedgerEntry $entry) => '- '.$this->heading($entry))->all(), ''];
         }
@@ -221,7 +226,7 @@ class DocumentRenderer
         $skills = $claims->get(DocumentClaim::SECTION_SKILLS, collect());
 
         if ($skills->isNotEmpty()) {
-            $lines[] = '## '.__('Skills');
+            $lines[] = '## '.$document->language->term('skills');
             $lines[] = '';
             $lines[] = $skills->pluck('text')->implode(', ');
             $lines[] = '';

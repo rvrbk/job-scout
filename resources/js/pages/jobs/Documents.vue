@@ -22,6 +22,8 @@ defineProps<{
     defaultStyle: string;
     defaultFont: string;
     preferredTone: string | null;
+    documentLanguages: Option[];
+    defaultLanguage: string;
 }>();
 
 defineOptions({
@@ -48,6 +50,8 @@ defineOptions({
             :default-style="defaultStyle"
             :default-font="defaultFont"
             :preferred-tone="preferredTone"
+            :document-languages="documentLanguages"
+            :default-language="defaultLanguage"
         />
         <ul v-if="generalDocuments.length" class="divide-y rounded-xl border">
             <li v-for="document in generalDocuments" :key="document.id">
@@ -61,7 +65,7 @@ defineOptions({
                         </p>
                         <p class="text-xs text-muted-foreground">
                             {{ document.created_at }} · {{ document.style_label }} style ·
-                                    {{ document.tone_label }} tone
+                                    {{ document.tone_label }} tone · {{ document.language_label }}
                         </p>
                     </div>
                     <DocumentStatusBadge :status="document.status" />

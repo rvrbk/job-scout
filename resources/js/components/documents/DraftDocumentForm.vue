@@ -17,15 +17,19 @@ const props = defineProps<{
     documentStyles: StyleOption[];
     documentFonts: StyleOption[];
     documentTones: ToneOption[];
+    documentLanguages: Option[];
     // The look this user gets: what they last chose, else one assigned to them.
     defaultStyle: string;
     defaultFont: string;
     preferredTone: string | null;
+    // What they last chose, else the language of the country they are from.
+    defaultLanguage: string;
 }>();
 
 const style = ref(props.defaultStyle);
 const font = ref(props.defaultFont);
 const choosingLook = ref(false);
+const language = ref(props.defaultLanguage);
 const tone = ref(
     props.preferredTone ?? props.documentTones[0]?.value ?? 'professional',
 );
@@ -77,6 +81,23 @@ const tone = ref(
                 {{ documentTones.find((o) => o.value === tone)?.description }}
             </p>
         </div>
+        <div class="grid gap-1">
+            <Label for="language">Language</Label>
+            <select
+                id="language"
+                name="language"
+                v-model="language"
+                class="h-9 w-fit rounded-md border border-input bg-transparent px-3 text-sm shadow-xs dark:bg-input/30"
+            >
+                <option
+                    v-for="option in documentLanguages"
+                    :key="option.value"
+                    :value="option.value"
+                >
+                    {{ option.label }}
+                </option>
+            </select>
+        </div>
         <div class="flex flex-wrap gap-2">
             <Button
                 v-for="documentType in documentTypes"
@@ -89,6 +110,6 @@ const tone = ref(
                 Draft {{ documentType.label }}
             </Button>
         </div>
-        <InputError :message="errors.type || errors.font || errors.style || errors.tone" />
+        <InputError :message="errors.type || errors.font || errors.style || errors.tone || errors.language" />
     </Form>
 </template>

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\ClaimKind;
 use App\Enums\ClaimStatus;
 use App\Enums\DocumentFont;
+use App\Enums\DocumentLanguage;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
@@ -584,6 +585,42 @@ class DocumentTruthfulnessTest extends TestCase
         $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
 
         $this->assertSame(DocumentTone::Professional, GeneratedDocument::query()->latest('id')->first()->tone);
+    }
+
+    public function test_the_language_defaults_to_the_users_country_and_the_last_choice_is_remembered()
+    {
+        $this->user->forceFill(['location' => 'Utrecht, Netherlands'])->save();
+        $this->assertSame(DocumentLanguage::Dutch, $this->user->documentLanguage());
+
+        $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
+            ->assertInertia(fn ($page) => $page->where('defaultLanguage', 'nl'));
+
+        $llm = $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv']);
+
+        $document = GeneratedDocument::sole();
+        $this->assertSame(DocumentLanguage::Dutch, $document->language);
+        $this->assertStringContainsString('Dutch', $llm->calls[0]['prompt']);
+        $this->assertStringContainsString('## Werkervaring', app(DocumentRenderer::class)->toMarkdown($document->fresh()));
+
+        $this->fakeLlm([$this->cvOutput(), $this->allSupported()]);
+        $this->actingAs($this->user)->post(route('documents.store', $this->posting), ['type' => 'cv', 'language' => 'de']);
+
+        $this->assertSame(DocumentLanguage::German, $this->user->fresh()->documentLanguage());
+        $this->actingAs($this->user)->get(route('jobs.show', $this->posting))
+            ->assertInertia(fn ($page) => $page->where('defaultLanguage', 'de'));
+
+        $this->actingAs($this->user)
+            ->post(route('documents.store', $this->posting), ['type' => 'cv', 'language' => 'tlh'])
+            ->assertSessionHasErrors('language');
+    }
+
+    public function test_the_language_is_english_when_the_location_names_no_single_country()
+    {
+        $this->assertSame(DocumentLanguage::English, DocumentLanguage::forLocation(null));
+        $this->assertSame(DocumentLanguage::English, DocumentLanguage::forLocation('Somewhere nice'));
+        $this->assertSame(DocumentLanguage::English, DocumentLanguage::forLocation('London, United Kingdom'));
+        $this->assertSame(DocumentLanguage::German, DocumentLanguage::forLocation('Berlin, Germany'));
     }
 
     public function test_the_last_chosen_style_and_tone_are_remembered_for_the_next_document()

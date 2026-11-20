@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentFont;
+use App\Enums\DocumentLanguage;
 use App\Enums\DocumentStyle;
 use App\Enums\DocumentTone;
 use App\Services\Billing\Polar;
@@ -32,6 +33,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property DocumentStyle|null $preferred_document_style
  * @property DocumentFont|null $preferred_document_font
  * @property DocumentTone|null $preferred_document_tone
+ * @property DocumentLanguage|null $preferred_document_language
  * @property string|null $polar_subscription_id
  * @property string|null $subscription_status
  * @property Carbon|null $subscription_ends_at
@@ -153,6 +155,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * The language a new document is written in: what the user last chose, else the language of the country in their location.
+     */
+    public function documentLanguage(): DocumentLanguage
+    {
+        return $this->preferred_document_language ?? DocumentLanguage::forLocation($this->location);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -165,6 +175,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'preferred_document_style' => DocumentStyle::class,
             'preferred_document_font' => DocumentFont::class,
             'preferred_document_tone' => DocumentTone::class,
+            'preferred_document_language' => DocumentLanguage::class,
             'two_factor_confirmed_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
             'subscription_cancels' => 'boolean',

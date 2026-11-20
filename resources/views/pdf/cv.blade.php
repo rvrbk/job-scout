@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ $language->value }}">
 <head>
     <meta charset="utf-8">
     <title>{{ $name }}</title>
@@ -13,7 +13,7 @@
     @endif
 
     @if (count($experience))
-        <h2>{{ __('Experience') }}</h2>
+        <h2>{{ $language->term('experience') }}</h2>
         @foreach ($experience as $entry)
             <div class="entry">
                 <div class="entry-head">
@@ -22,7 +22,7 @@
                 </div>
                 <ul>
                     @foreach ($entry['bullets'] as $bullet)
-                        <li>{{ $bullet['text'] }}@if ($bullet['url']) <a href="{{ $bullet['url'] }}">{{ __('source') }}</a>@endif</li>
+                        <li>{{ $bullet['text'] }}@if ($bullet['url']) <a href="{{ $bullet['url'] }}">{{ $language->term('source') }}</a>@endif</li>
                     @endforeach
                 </ul>
             </div>
@@ -30,14 +30,14 @@
     @endif
 
     @if (count($skills))
-        <h2>{{ __('Skills') }}</h2>
+        <h2>{{ $language->term('skills') }}</h2>
         <div>
             @foreach ($skills as $skill)<span class="chip">{{ $skill }}</span> @endforeach
         </div>
     @endif
 
     @if (count($credentials))
-        <h2>{{ __('Education & certifications') }}</h2>
+        <h2>{{ $language->term('education') }}</h2>
         @foreach ($credentials as $credential)
             <div class="credential">
                 @if ($credential['period'])<span class="period">{{ $credential['period'] }}</span>@endif

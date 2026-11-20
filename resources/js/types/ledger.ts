@@ -101,6 +101,7 @@ export type DocumentSummary = {
     style_label: string;
     font_label: string;
     tone_label: string;
+    language_label: string;
     status: DocumentStatus;
     created_at: string | null;
 };
@@ -126,6 +127,7 @@ export type GeneratedDocument = {
     style_label: string;
     font_label: string;
     tone_label: string;
+    language_label: string;
     status: DocumentStatus;
     is_processing: boolean;
     can_be_approved: boolean;

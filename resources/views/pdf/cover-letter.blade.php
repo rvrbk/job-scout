@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ $language->value }}">
 <head>
     <meta charset="utf-8">
     <title>{{ $name }}</title>
