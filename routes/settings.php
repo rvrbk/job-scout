@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\BillingController;
 use App\Http\Controllers\Settings\InvitationController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -32,6 +33,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('settings/billing/checkout', [BillingController::class, 'checkout'])->middleware('throttle:6,1')->name('billing.checkout');
     Route::post('settings/billing/portal', [BillingController::class, 'portal'])->middleware('throttle:6,1')->name('billing.portal');
+
+    Route::get('settings/api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+    Route::post('settings/api-tokens', [ApiTokenController::class, 'store'])->middleware('throttle:10,1')->name('api-tokens.store');
+    Route::delete('settings/api-tokens/{token}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });

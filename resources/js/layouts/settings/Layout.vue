@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
+import { index as apiTokens } from '@/routes/api-tokens';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as billing } from '@/routes/billing';
 import { index as invitations } from '@/routes/invitations';
@@ -25,6 +26,10 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Billing',
         href: billing(),
+    },
+    {
+        title: 'AI assistants',
+        href: apiTokens(),
     },
     {
         title: 'Appearance',
