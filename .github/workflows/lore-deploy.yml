@@ -1,0 +1,16 @@
+name: Deploy through Lore
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Lore to deploy
+        env:
+          LORE_DEPLOY_TOKEN: ${{ secrets.LORE_DEPLOY_TOKEN }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 3 -X POST \
+            -H "Authorization: Bearer $LORE_DEPLOY_TOKEN" "https://lore.verbeek.ug/api/deploy/2"
