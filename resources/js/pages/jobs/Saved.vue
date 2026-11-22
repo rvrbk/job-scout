@@ -100,10 +100,13 @@ defineOptions({
                         :href="show(posting.id)"
                         class="flex min-w-0 flex-1 items-center gap-4 p-4 hover:bg-muted/50"
                     >
-                        <CountryFlags :countries="posting.countries" />
                         <div class="min-w-0 flex-1">
                             <p class="font-medium">{{ posting.title }}</p>
                             <p class="text-sm text-muted-foreground">
+                                <CountryFlags
+                                    :countries="posting.countries"
+                                    class="mr-1.5"
+                                />
                                 {{ posting.company ?? 'Unknown company' }} ·
                                 added {{ posting.created_at }}
                             </p>

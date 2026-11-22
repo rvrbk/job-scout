@@ -119,7 +119,6 @@ defineOptions({
                         class="mt-0.5 w-12 justify-center"
                         >{{ posting.match_score }}</Badge
                     >
-                    <CountryFlags :countries="posting.countries" class="mt-1" />
                     <Link :href="show(posting.id)" class="min-w-0 flex-1">
                         <p
                             :class="
@@ -134,6 +133,10 @@ defineOptions({
                             >
                         </p>
                         <p class="text-sm text-muted-foreground">
+                            <CountryFlags
+                                :countries="posting.countries"
+                                class="mr-1.5"
+                            />
                             {{
                                 [
                                     posting.company,
