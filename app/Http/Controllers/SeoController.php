@@ -15,6 +15,7 @@ class SeoController extends Controller
             'Allow: /features$',
             'Allow: /faq$',
             'Allow: /llms.txt',
+            'Allow: /sitemap.xml',
             'Allow: /build/',
             'Allow: /og-image.png',
             'Allow: /favicon.ico',
