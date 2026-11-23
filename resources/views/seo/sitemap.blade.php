@@ -2,9 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 @foreach ($urls as $url)
     <url>
-        <loc>{{ $url }}</loc>
+        <loc>{{ $url['loc'] }}</loc>
+        <lastmod>{{ $lastmod }}</lastmod>
         <changefreq>monthly</changefreq>
-        <priority>1.0</priority>
+        <priority>{{ $url['priority'] }}</priority>
     </url>
 @endforeach
 </urlset>

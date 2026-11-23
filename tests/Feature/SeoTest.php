@@ -42,4 +42,37 @@ class SeoTest extends TestCase
         $this->get('/sitemap.xml')->assertOk()->assertSee('<loc>'.route('home').'</loc>', false);
         $this->get('/llms.txt')->assertOk()->assertSee('# Job Scout')->assertSee('pastes or links to', false)->assertSee('general document', false)->assertSee('Frequently asked questions', false)->assertSee('Typical workflow', false);
     }
+
+    public function test_public_pages_are_indexable_with_their_own_canonical_and_schema(): void
+    {
+        $this->get('/faq')
+            ->assertOk()
+            ->assertSee('index, follow', false)
+            ->assertSee('<link rel="canonical" href="'.route('pages.faq').'">', false)
+            ->assertSee('"@type":"FAQPage"', false)
+            ->assertSee('Does Job Scout apply to jobs for me?', false);
+
+        $this->get('/how-it-works')
+            ->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('pages.how-it-works').'">', false)
+            ->assertSee('"@type":"HowTo"', false)
+            ->assertSee('Build your ledger', false);
+
+        $this->get('/features')
+            ->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('pages.features').'">', false)
+            ->assertSee('"@type":"WebPage"', false)
+            ->assertSee('Fact ledger', false);
+    }
+
+    public function test_sitemap_and_llms_list_the_public_pages(): void
+    {
+        $sitemap = $this->get('/sitemap.xml')->assertOk();
+        $llms = $this->get('/llms.txt')->assertOk();
+
+        foreach (['pages.how-it-works', 'pages.features', 'pages.faq'] as $name) {
+            $sitemap->assertSee('<loc>'.route($name).'</loc>', false);
+            $llms->assertSee(route($name), false);
+        }
+    }
 }

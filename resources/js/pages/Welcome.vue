@@ -200,7 +200,12 @@ defineProps<{
             </section>
         </main>
 
-        <footer class="mx-auto w-full max-w-5xl p-6">
+        <footer class="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 p-6">
+            <nav class="flex gap-4 text-sm text-muted-foreground">
+                <Link href="/how-it-works" class="hover:text-foreground">How it works</Link>
+                <Link href="/features" class="hover:text-foreground">Features</Link>
+                <Link href="/faq" class="hover:text-foreground">FAQ</Link>
+            </nav>
             <PlatformCredit />
         </footer>
     </div>

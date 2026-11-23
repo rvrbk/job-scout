@@ -2,7 +2,7 @@
 
 > {{ $name }} helps job seekers find jobs that match their real experience, or takes a vacancy the user pastes or links to, then drafts a CV and cover letter in which every claim traces back to a fact the user has confirmed.
 
-{{ $name }} is a web application by verbeek.ug. It is a private, login-only tool: the only public page is the landing page, and signed-in areas (ledger, jobs, documents, settings) are not intended for crawling or indexing.
+{{ $name }} is a web application by verbeek.ug. It is a private, login-only tool: the public pages are the landing page and the guides listed below, and signed-in areas (ledger, jobs, documents, settings) are not intended for crawling or indexing.
 
 ## How it works
 
@@ -27,6 +27,9 @@
 ## Pages
 
 - [Home]({{ $url }}): product overview and login.
+@foreach ($pages as $slug => $page)
+- [{{ $page['title'] }}]({{ route('pages.'.$slug) }}): {{ $page['description'] }}
+@endforeach
 
 ## Contact
 

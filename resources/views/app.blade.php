@@ -57,5 +57,6 @@
     </head>
     <body class="font-sans antialiased">
         <x-inertia::app />
+        @include('partials.seo-fallback')
     </body>
 </html>
