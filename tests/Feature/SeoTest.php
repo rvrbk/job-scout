@@ -38,7 +38,7 @@ class SeoTest extends TestCase
 
     public function test_robots_sitemap_and_llms_are_served(): void
     {
-        $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: '.route('sitemap'), false);
+        $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: '.route('sitemap'), false)->assertSee('Allow: /favicon.ico', false);
         $this->get('/sitemap.xml')->assertOk()->assertSee('<loc>'.route('home').'</loc>', false);
         $this->get('/llms.txt')->assertOk()->assertSee('# Job Scout')->assertSee('pastes or links to', false)->assertSee('general document', false)->assertSee('Frequently asked questions', false)->assertSee('Typical workflow', false);
     }
