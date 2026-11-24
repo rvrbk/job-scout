@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\DocumentStatus;
 use App\Models\GeneratedDocument;
+use App\Models\JobPosting;
 use App\Models\LedgerEntry;
 use App\Models\LedgerFact;
 use App\Models\User;
@@ -167,5 +168,19 @@ class PostingImportAndGeneralDocumentTest extends TestCase
 
         $this->actingAs($user)->get(route('jobs.documents'))
             ->assertInertia(fn ($page) => $page->has('generalDocuments', 1)->has('documentTypes')->has('documentStyles'));
+    }
+
+    public function test_a_job_document_can_be_deleted_by_its_owner_only()
+    {
+        $user = User::factory()->create();
+        $posting = JobPosting::factory()->for($user)->create();
+        $document = GeneratedDocument::factory()->for($user)->create(['job_posting_id' => $posting->id]);
+
+        $this->actingAs(User::factory()->create())->delete(route('documents.destroy', $document))->assertForbidden();
+        $this->assertModelExists($document);
+
+        $this->actingAs($user)->delete(route('documents.destroy', $document))->assertRedirect(route('jobs.show', $posting));
+        $this->assertModelMissing($document);
+        $this->assertModelExists($posting);
     }
 }

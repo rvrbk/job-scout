@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePoll } from '@inertiajs/vue3';
-import { Download } from '@lucide/vue';
+import { Download, Trash2 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
 import LookPicker from '@/components/documents/LookPicker.vue';
@@ -42,6 +42,9 @@ watch(
 );
 
 const showPreview = ref(false);
+
+const confirmDelete = () =>
+    window.confirm('Delete this draft? This cannot be undone.');
 
 const choosingLook = ref(false);
 const font = ref(props.document.font);
@@ -189,6 +192,13 @@ const locked = computed(() => props.document.is_processing);
                     >
                     <InputError :message="errors.approve" class="mt-1" />
                 </Form>
+                <Link
+                    :href="GeneratedDocumentController.destroy(document.id)"
+                    as="button"
+                    class="inline-flex items-center gap-1 p-2 text-sm text-muted-foreground hover:text-destructive"
+                    :on-before="confirmDelete"
+                    ><Trash2 class="size-4" /> Delete</Link
+                >
             </div>
         </div>
 
