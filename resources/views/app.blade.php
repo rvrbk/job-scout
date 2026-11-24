@@ -3,7 +3,23 @@
     <head>
         @php($gaId = config('services.google_analytics.measurement_id'))
         {{-- Page views are sent from the Inertia navigate event in app.ts. --}}
-        @include('partials.cookie-consent', ['gaId' => $gaId, 'autoPageView' => false])
+        {{-- Uses the app's own design tokens, so it follows light and dark mode. --}}
+        @include('partials.cookie-consent', [
+            'gaId' => $gaId,
+            'autoPageView' => false,
+            'theme' => [
+                '--cc-bg' => 'var(--card)',
+                '--cc-fg' => 'var(--card-foreground)',
+                '--cc-border' => 'var(--border)',
+                '--cc-radius' => 'var(--radius)',
+                '--cc-btn-radius' => 'calc(var(--radius) - 2px)',
+                '--cc-font' => "var(--font-sans, 'Ubuntu', ui-sans-serif, system-ui, sans-serif)",
+                '--cc-accent' => 'var(--primary)',
+                '--cc-accent-fg' => 'var(--primary-foreground)',
+                '--cc-border-strong' => 'var(--border)',
+                '--cc-shadow' => '0 10px 30px hsl(0 0% 0% / .14)',
+            ],
+        ])
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
