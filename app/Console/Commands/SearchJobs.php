@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 #[Signature('jobs:search')]
-#[Description('Run the job search for every user who has set search preferences')]
+#[Description('Run the job search for every user who has set search preferences and has not paused it')]
 class SearchJobs extends Command
 {
     /** Slightly under a day, so the 7:00 run is not skipped by a 19:00 run that finished a little late. */
@@ -20,7 +20,7 @@ class SearchJobs extends Command
 
     public function handle(): int
     {
-        User::whereHas('jobSearchPreference')->each(function (User $user) {
+        User::whereHas('jobSearchPreference', fn ($preferences) => $preferences->whereNull('paused_at'))->each(function (User $user) {
             if (! LedgerSnapshot::forUser($user)->hasFacts()) {
                 return;
             }

@@ -434,6 +434,59 @@ class JobSearchTest extends TestCase
         $this->actingAs($user)->post(route('jobs.search'))->assertForbidden();
     }
 
+    public function test_the_scheduled_search_skips_paused_users()
+    {
+        Http::fake(['*' => Http::response([])]);
+        $this->fakeLlm();
+        $paused = $this->userWithLedger();
+        $paused->jobSearchPreference()->create(['min_score' => 60])->forceFill(['paused_at' => now()])->save();
+        $active = $this->userWithLedger();
+        $active->jobSearchPreference()->create(['min_score' => 60]);
+
+        $this->artisan('jobs:search')->assertSuccessful();
+
+        $this->assertNull($paused->jobSearchPreference->refresh()->last_searched_at);
+        $this->assertNotNull($active->jobSearchPreference->refresh()->last_searched_at);
+    }
+
+    public function test_the_admin_can_pause_and_resume_the_scheduled_search()
+    {
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['min_score' => 60]);
+        config(['app.admin_email' => $user->email]);
+
+        $this->actingAs($user)->post(route('jobs.search.pause'))->assertRedirect();
+        $this->assertTrue($user->jobSearchPreference->refresh()->isPaused());
+
+        $this->actingAs($user)->get(route('jobs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('paused', true));
+
+        $this->actingAs($user)->delete(route('jobs.search.resume'))->assertRedirect();
+        $this->assertFalse($user->jobSearchPreference->refresh()->isPaused());
+    }
+
+    public function test_only_the_admin_can_pause_the_scheduled_search()
+    {
+        $user = $this->userWithLedger();
+        $user->jobSearchPreference()->create(['min_score' => 60]);
+        config(['app.admin_email' => 'someone-else@example.com']);
+
+        $this->actingAs($user)->post(route('jobs.search.pause'))->assertForbidden();
+        $this->actingAs($user)->delete(route('jobs.search.resume'))->assertForbidden();
+
+        $this->assertFalse($user->jobSearchPreference->refresh()->isPaused());
+    }
+
+    public function test_pausing_needs_saved_search_preferences()
+    {
+        $user = $this->userWithLedger();
+        config(['app.admin_email' => $user->email]);
+
+        $this->actingAs($user)->post(route('jobs.search.pause'))->assertRedirect();
+
+        $this->assertNull($user->jobSearchPreference);
+    }
+
     public function test_the_search_is_scheduled_twice_a_day()
     {
         $event = collect(app(Schedule::class)->events())
