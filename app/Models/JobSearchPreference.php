@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $salary_max
  * @property string $salary_currency
  * @property Carbon|null $last_searched_at
+ * @property Carbon|null $paused_at
  */
 #[Fillable(['locations', 'remote_preference', 'keywords', 'exclusions', 'feeds', 'boards', 'min_score', 'salary_min', 'salary_max', 'salary_currency', 'last_searched_at'])]
 class JobSearchPreference extends Model
@@ -104,6 +105,14 @@ class JobSearchPreference extends Model
     }
 
     /**
+     * Whether the scheduled search skips this user until they resume it.
+     */
+    public function isPaused(): bool
+    {
+        return $this->paused_at !== null;
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
@@ -128,6 +137,7 @@ class JobSearchPreference extends Model
             'salary_min' => 'integer',
             'salary_max' => 'integer',
             'last_searched_at' => 'datetime',
+            'paused_at' => 'datetime',
         ];
     }
 }

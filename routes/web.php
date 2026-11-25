@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('jobs/preferences', [JobSearchController::class, 'update'])->name('jobs.preferences.update');
     Route::post('jobs/boards/suggest', [JobSearchController::class, 'suggestBoards'])->middleware(['subscribed', 'throttle:6,1'])->name('jobs.boards.suggest');
     Route::post('jobs/search', [JobSearchController::class, 'search'])->middleware('subscribed')->name('jobs.search');
+    Route::post('jobs/search/pause', [JobSearchController::class, 'pause'])->name('jobs.search.pause');
+    Route::delete('jobs/search/pause', [JobSearchController::class, 'resume'])->name('jobs.search.resume');
     Route::post('jobs/{jobPosting}/save', [JobSearchController::class, 'save'])->name('jobs.save');
     Route::post('jobs/{jobPosting}/dismiss', [JobSearchController::class, 'dismiss'])->name('jobs.dismiss');
     Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');

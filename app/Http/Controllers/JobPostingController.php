@@ -38,6 +38,7 @@ class JobPostingController extends Controller
 
         return Inertia::render('jobs/Index', [
             'searching' => RunJobSearch::isRunning($request->user()),
+            'paused' => $preferences?->isPaused() ?? false,
             'postings' => $found->map(fn (JobPosting $posting) => $this->summary($posting)),
             'preferences' => [
                 'locations' => $preferences?->places() ?? [],

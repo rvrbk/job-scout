@@ -63,6 +63,38 @@ class JobSearchController extends Controller
     }
 
     /**
+     * Stop the scheduled searches for the admin until they resume. Searching by hand still works.
+     */
+    public function pause(Request $request): RedirectResponse
+    {
+        return $this->setPaused($request, true);
+    }
+
+    public function resume(Request $request): RedirectResponse
+    {
+        return $this->setPaused($request, false);
+    }
+
+    private function setPaused(Request $request, bool $paused): RedirectResponse
+    {
+        abort_unless($request->user()->canSearchManually(), 403);
+
+        $preferences = $request->user()->jobSearchPreference;
+
+        if ($preferences === null) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => __('Save your search preferences first.')]);
+
+            return back();
+        }
+
+        $preferences->forceFill(['paused_at' => $paused ? now() : null])->save();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $paused ? __('Scheduled searches paused.') : __('Scheduled searches resumed.')]);
+
+        return back();
+    }
+
+    /**
      * Company boards that suit the user's ledger and saved preferences, with how many of their open jobs fit.
      */
     public function suggestBoards(Request $request, BoardFinder $finder): JsonResponse
