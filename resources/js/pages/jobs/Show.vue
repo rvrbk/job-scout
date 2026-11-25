@@ -39,6 +39,9 @@ defineOptions({
 
 const confirmDelete = () =>
     window.confirm('Remove this job and every draft made for it?');
+
+const confirmDeleteDocument = () =>
+    window.confirm('Delete this draft? This cannot be undone.');
 </script>
 
 <template>
@@ -125,10 +128,14 @@ const confirmDelete = () =>
                     Nothing drafted yet.
                 </p>
                 <ul class="divide-y rounded-xl border">
-                    <li v-for="document in documents" :key="document.id">
+                    <li
+                        v-for="document in documents"
+                        :key="document.id"
+                        class="flex items-center hover:bg-muted/50"
+                    >
                         <Link
                             :href="showDocument(document.id)"
-                            class="flex items-center justify-between gap-4 p-3 hover:bg-muted/50"
+                            class="flex flex-1 items-center justify-between gap-4 p-3"
                         >
                             <div>
                                 <p class="font-medium">
@@ -141,6 +148,14 @@ const confirmDelete = () =>
                             </div>
                             <DocumentStatusBadge :status="document.status" />
                         </Link>
+                        <Link
+                            :href="GeneratedDocumentController.destroy(document.id)"
+                            as="button"
+                            class="p-3 text-muted-foreground hover:text-destructive"
+                            title="Delete draft"
+                            :on-before="confirmDeleteDocument"
+                            ><Trash2 class="size-4"
+                        /></Link>
                     </li>
                 </ul>
             </div>

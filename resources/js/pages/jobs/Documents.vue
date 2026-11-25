@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { Trash2 } from '@lucide/vue';
 import GeneratedDocumentController from '@/actions/App/Http/Controllers/GeneratedDocumentController';
 import DocumentStatusBadge from '@/components/DocumentStatusBadge.vue';
 import DraftDocumentForm from '@/components/documents/DraftDocumentForm.vue';
@@ -25,6 +26,9 @@ defineProps<{
     documentLanguages: Option[];
     defaultLanguage: string;
 }>();
+
+const confirmDeleteDocument = () =>
+    window.confirm('Delete this draft? This cannot be undone.');
 
 defineOptions({
     layout: {
@@ -54,10 +58,14 @@ defineOptions({
             :default-language="defaultLanguage"
         />
         <ul v-if="generalDocuments.length" class="divide-y rounded-xl border">
-            <li v-for="document in generalDocuments" :key="document.id">
+            <li
+                v-for="document in generalDocuments"
+                :key="document.id"
+                class="flex items-center hover:bg-muted/50"
+            >
                 <Link
                     :href="showDocument(document.id)"
-                    class="flex items-center justify-between gap-4 p-3 hover:bg-muted/50"
+                    class="flex flex-1 items-center justify-between gap-4 p-3"
                 >
                     <div>
                         <p class="font-medium">
@@ -70,6 +78,14 @@ defineOptions({
                     </div>
                     <DocumentStatusBadge :status="document.status" />
                 </Link>
+                <Link
+                    :href="GeneratedDocumentController.destroy(document.id)"
+                    as="button"
+                    class="p-3 text-muted-foreground hover:text-destructive"
+                    title="Delete draft"
+                    :on-before="confirmDeleteDocument"
+                    ><Trash2 class="size-4"
+                /></Link>
             </li>
         </ul>
     </section>
