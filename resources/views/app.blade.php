@@ -59,7 +59,6 @@
         <x-inertia::head>
             <title>{{ config('app.name', 'Job Scout') }}</title>
         </x-inertia::head>
-        <script defer src="https://lore.verbeek.ug/heat.js" data-key="jmAGM5ITtgJ24wnAHNgn3YlWhk3kwZL4" data-lore-heat></script>
     </head>
     <body class="font-sans antialiased">
         <x-inertia::app />
